@@ -22,4 +22,4 @@ fi
 # run script
 echo "Start tool"
 echo "================"
-python bt_tool.py "$@"
+python sut.py "$@"
