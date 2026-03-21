@@ -1,3 +1,4 @@
+from enum import Enum
 import time
 from logger import NDJSONLogger
 
@@ -9,13 +10,18 @@ STATE_LENGTH = 2
 
 PROGRESS = object()
 
+class ParserMode(Enum):
+    RX = "RX"
+    TX = "TX"
+
 class UARTParser:
-    def __init__(self, crc_func, timeout):
+    def __init__(self, crc_func, timeout, mode=ParserMode.RX):
         self.buffer = bytearray()
         self.state = STATE_WAIT_START
         self.msg_start_time = None
         self.crc_func = crc_func
         self.timeout = timeout
+        self.mode = mode
 
     def feed(self, data):
         self.buffer.extend(data)
@@ -82,7 +88,9 @@ class UARTParser:
             return None
 
         length = self.buffer[2]
-        total_len = 1 + 1 + 1 + length + 2
+
+        base_len = 1 + 1 + 1 + length  # START + CMD + LEN + DATA
+        total_len = base_len + (2 if self.mode == ParserMode.RX else 0)
 
         if len(self.buffer) < total_len:
             return None
@@ -90,13 +98,24 @@ class UARTParser:
         msg = self.buffer[:total_len]
         self.buffer = self.buffer[total_len:]
 
-        crc_calc = self.crc_func(msg[1:-2])
-        crc_msg = msg[-2] | (msg[-1] << 8)
-
         self.state = STATE_WAIT_START
         self.msg_start_time = None
 
-        if crc_calc == crc_msg:
-            return ("OK", msg)
-        else:
-            return ("CRC_ERROR", msg, crc_calc, crc_msg)
+        # TX mode → compute and append CRC
+        if self.mode == ParserMode.TX:
+            # msg = [START][CMD][LEN][DATA...]
+            crc = self.crc_func(msg[1:])
+            msg = bytearray(msg)  # ensure mutable
+            msg += bytes([crc & 0xFF, (crc >> 8) & 0xFF])
+            return ("OK", bytes(msg))
+
+
+        if self.mode == ParserMode.RX:
+            # RX mode → CRC is always validated
+            crc_calc = self.crc_func(msg[1:-2])
+            crc_msg = msg[-2] | (msg[-1] << 8)
+
+            if crc_calc == crc_msg:
+                return ("OK", msg)
+            else:
+                return ("CRC_ERROR", msg, crc_calc, crc_msg)

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+from collections import deque
+from enum import Enum
+import sys
+
 import serial
 import crcmod.predefined
 import os
@@ -6,7 +10,7 @@ import select
 import time
 from config import Config
 from logger import NDJSONLogger
-from parser import UARTParser
+from parser import ParserMode, UARTParser
 import traceback
 
 # ---------- CONFIG ----------
@@ -49,9 +53,10 @@ def make_logger(config_section: dict | bool | None) -> NDJSONLogger | None:
 
 config = Config("config.json")
 logger = make_logger(config.get_section("logger"))
-parser = UARTParser(crc16_func, MSG_TIMEOUT)
+rx_parser = UARTParser(crc16_func, MSG_TIMEOUT, ParserMode.RX)
+tx_parser = UARTParser(crc16_func, MSG_TIMEOUT, ParserMode.TX)
 
-def handle_result(result, tx: str):
+def handle_rx_result(result, tx: str):
     kind = result[0]
     rx = None
     
@@ -72,89 +77,74 @@ def handle_result(result, tx: str):
 
     logger.log(tx=tx, rx=rx, notes=kind)
 
-def handle_pipe_input(pipe_fd: int, ser: serial.Serial) -> str:
-    try:
-        msg_str = os.read(pipe_fd, 1024)
-        if not msg_str:
-            return
-
-        payload = (
-            msg_str
-            .decode('unicode_escape')
-            .encode('latin1')
-        )
-
-        msg = bytearray([START_BYTE]) + payload
-        crc = crc16_func(msg[1:])
-        msg += bytes([crc & 0xFF, (crc >> 8) & 0xFF])
-
-        ser.write(msg)
-
-        # Format bytes as hex string
-        formatted = " ".join(f"{b:02X}" for b in msg)
-        
-        # Print with prefix
-        print("S:", formatted)
-
-        return formatted
-
-    except BlockingIOError:
-        # This is normal for non-blocking reads; just ignore
-        pass
-    except Exception as e:
-        print("PIPE ERROR:", repr(e))
-
-        # show raw input if available
-        try:
-            print("RAW:", msg_str)
-        except UnboundLocalError:
-            print("RAW: <not read>")
-
-        # optional: decoded attempt
-        try:
-            print("AS TEXT:", msg_str.decode(errors="replace"))
-        except Exception:
-            pass
-
-        # full traceback (very useful while debugging)
-        traceback.print_exc()
-
 # Open serial
-ser = serial.Serial(DEVICE, BAUD, bytesize=8, parity='N', stopbits=1, timeout=0.1)
+try:
+    ser = serial.Serial(DEVICE, BAUD, bytesize=8, parity='N', stopbits=1, timeout=0.1)
+except:
+    print(f"{RED}Serial problem{RESET}") # TODO: Create a bit better of error reporting.
+    sys.exit(1)
 
 # Open FIFO
 if not os.path.exists(PIPE):
     os.mkfifo(PIPE)
 pipe_fd = os.open(PIPE, os.O_RDONLY | os.O_NONBLOCK)
+# Open a write end in the same process to prevent EOF
+dummy_w_fd = os.open(PIPE, os.O_WRONLY | os.O_NONBLOCK)
 
-pending_tx = []  # store TX events waiting for a response
+TX_TIMEOUT = 0.5
+
+class TxState(Enum):
+    IDLE = 0
+    WAIT_RX = 1
+
+tx_state = TxState.IDLE
+tx_queue = deque()  # queue for incoming TX messages
+current_tx = None
+tx_start_time = None
 
 try:
     while True:
         rlist, _, _ = select.select([ser, pipe_fd], [], [], 0.1)
+        now = time.time()
 
-        for fd in rlist:
-            if fd == ser:
-                data = ser.read(ser.in_waiting or 1)
-                if not data:
-                    continue
+        # --- RX handling ---
+        if ser in rlist:
+            data = ser.read(ser.in_waiting or 1)
+            if data and tx_state == TxState.WAIT_RX:
+                for result in rx_parser.feed(data): # TODO: For the battery tests this should work, because we'll get a response for every TX, but this will fail when using to spoof a battery.
+                    handle_rx_result(result, current_tx)
+                    tx_state = TxState.IDLE
+                    current_tx = None
 
-                for result in parser.feed(data):
-                    handle_result(result, pending_tx.pop())
-                
-                # There was a tx without rx, log it without rx.
-                while len(pending_tx) > 0:
-                    logger.log(tx=pending_tx.pop(), rx=None, notes="NO_REPLY")
+        # --- read new TX from pipe and queue them ---
+        if pipe_fd in rlist:
+            data = os.read(pipe_fd, 1024)
+            if data:
+                for result in tx_parser.feed(data):
+                    tx_queue.append(result[1])  # store the msg_bytes
 
-            elif fd == pipe_fd:
-                tx_result = handle_pipe_input(pipe_fd, ser)
-                if tx_result is not None:
-                    pending_tx.append(tx_result)
+        # --- send next TX if idle ---
+        if tx_state == TxState.IDLE and tx_queue:
+            current_tx = tx_queue.popleft()
+            ser.write(current_tx)
+            # Format bytes as hex string
+            formatted = " ".join(f"{b:02X}" for b in current_tx)
+            # Print with prefix
+            print("S:", formatted)
+            tx_start_time = time.time()
+            tx_state = TxState.WAIT_RX
+
+        # --- timeout handling ---
+        if tx_state == TxState.WAIT_RX and (now - tx_start_time) > TX_TIMEOUT:
+            logger.log(tx=current_tx, rx=None, notes="NO_REPLY")
+            tx_state = TxState.IDLE
+            current_tx = None
 
 except KeyboardInterrupt:
     print("\nExiting…")
 finally:
     ser.close()
     os.close(pipe_fd)
+    os.close(dummy_w_fd)
     if(logger):
         logger.flush()
