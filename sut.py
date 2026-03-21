@@ -119,8 +119,6 @@ def handle_pipe_input(pipe_fd: int, ser: serial.Serial) -> str:
         # full traceback (very useful while debugging)
         traceback.print_exc()
 
-quit()
-
 # Open serial
 ser = serial.Serial(DEVICE, BAUD, bytesize=8, parity='N', stopbits=1, timeout=0.1)
 
@@ -156,3 +154,5 @@ except KeyboardInterrupt:
 finally:
     ser.close()
     os.close(pipe_fd)
+    if(logger):
+        logger.flush()
