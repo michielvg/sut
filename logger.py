@@ -4,12 +4,13 @@ import os
 from datetime import datetime, timezone
 
 class NDJSONLogger:
-    def __init__(self, dev=None, base_path="data", buffer_size=100, fsync=False, config:dict=None):
+    def __init__(self, src="NA", dev=None, base_path="data", buffer_size=100, fsync=False, config:dict=None):
         self.base_path = base_path
         self.buffer = []
         self.buffer_size = buffer_size
         self.fsync = fsync
         self.current_date = None
+        self.src = src
         self.dev = dev
 
         # Override with config file if provided
@@ -20,11 +21,13 @@ class NDJSONLogger:
         if  self.dev is None:
             self._print_dev_menu()
 
-        print(f"Logging enabled for device {self.dev}")
+        print(f"Logging enabled for device {self.dev} from source {self.src}")
     
     def _load_from_config(self, config:dict):
+        if "source" in config:
+            self.src = config["source"]
         if "device" in config:
-            self.dev  = config["device"]
+            self.dev = config["device"]
         if "buffer_size" in config:
             self.buffer_size = config["buffer_size"]
         if "fsync" in config:
@@ -63,6 +66,7 @@ class NDJSONLogger:
     def log(self, tx, rx, notes=None):
         record = {
             "v": 1,
+            "src": self.src,
             "t": datetime.now(timezone.utc).isoformat() + "Z",
             "dev": self.dev,
             "tx": tx,
