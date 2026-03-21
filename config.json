@@ -1,6 +1,6 @@
 {
     "logger": {
-        "source": "mvg",
+        "source": "NA",
         "device": "BT-E6000-A",
         "buffer_size": 100,
         "fsync": false
