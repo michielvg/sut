@@ -1,11 +1,23 @@
 #!/usr/bin/env bash
 
+count=1
 dry_run=false
 
-# Parse args
-for arg in "$@"; do
-    case "$arg" in
-        --dry-run) dry_run=true ;;
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --count)
+            count="$2"
+            shift 2
+            ;;
+        --dry-run)
+            dry_run=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            shift
+            ;;
     esac
 done
 
@@ -16,6 +28,8 @@ if $dry_run; then
 else
     exec 3> /tmp/sut_pipe
 fi
+
+echo "COUNT: ${count}"
 
 # Function to send arbitrary-length byte arrays
 send_payload() {
@@ -36,7 +50,7 @@ send_payload() {
 # Send init message.
 send_payload 0 0x42 0
 
-for i in {1..30}; do
+for ((i=1; i<=count; i++)); do
     # Send status/Poll status
     send_payload 0 0 0x5 0x10 0 0 0 0
 done
