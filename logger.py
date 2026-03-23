@@ -22,7 +22,7 @@ class NDJSONLogger:
         if  self.dev is None:
             self._print_dev_menu()
 
-        print(f"Logging enabled for device {self.dev} from source {self.src}")
+        print(f"Logging enabled for device {self.dev} from source {self.src}: {self.intent}")
     
     def _load_from_config(self, config:dict):
         if "source" in config:
@@ -30,7 +30,7 @@ class NDJSONLogger:
         if "device" in config:
             self.dev = config["device"]
         if "intent" in config:
-            self.dev = config["intent"]
+            self.intent = config["intent"]
         if "buffer_size" in config:
             self.buffer_size = config["buffer_size"]
         if "fsync" in config:
