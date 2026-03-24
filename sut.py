@@ -12,6 +12,7 @@ import sys
 import time
 from collections import deque
 from datetime import datetime, timedelta
+import traceback
 import crcmod.predefined
 
 from config import Config
@@ -181,9 +182,9 @@ def main():
 
     # Open serial device
     try:
-        serial_uart = PySerialUART(config.get_section("uart"))
+        serial_uart = PySerialUART.from_config(config.get_section("uart"))
         #serial_uart = MockUART()
-    except Exception:
+    except Exception as e:
         print(f"{RED}Serial problem{RESET}")
         sys.exit(1)
 

@@ -7,8 +7,9 @@ import crcmod.predefined
 class MsgStatus(Enum):
     NA = -1
     OK = 0
-    CRC_ERROR = 1
-    INCOMPLETE = 2
+    PREFIX_ERROR = 1
+    CRC_ERROR = 2
+    INCOMPLETE = 3
     
 class Msg:
     PREFIX_FORMAT = 'BBB' # 3 byte prefix -> 0x00 0xHS 0xLL
@@ -19,13 +20,13 @@ class Msg:
     FORMAT = ''           # subclasses override
     FIELDS = []           # attribute names in order
 
+    crc_func = crcmod.predefined.mkCrcFun('x-25')
+
     def __init__(self):
         self.status: MsgStatus = MsgStatus.NA
         self.status_info: str = '' # calc={calc:04X} recv={msg.crc:04X}
         self.sent_at: datetime | None = None
         self.receieved_at: datetime | None = None
-
-        self.crc_func = crcmod.predefined.mkCrcFun('x-25')
 
         self.data: bytes =  bytes()
         
@@ -41,7 +42,8 @@ class Msg:
     def reply_for_msg(cls, msg:"Msg"):
         result = cls()
         result.cmd = msg.cmd
-        result.seq = msg.seq | 0x80
+        result.seq = msg.seq 
+        result.sender = msg.sender | 0x80
 
     def pack(self):
         # 1. Collect payload values
@@ -54,7 +56,7 @@ class Msg:
         payload_bytes = prefix_bytes + values_bytes
 
         # 3. Calculate CRC over payload (or include prefix if your protocol does)
-        crc_value = self.crc_func(payload_bytes)
+        crc_value = Msg.crc_func(payload_bytes)
         crc_bytes = struct.pack('<H', crc_value)  # little-endian CRC
 
         # 4. Prepend prefix and append CRC
@@ -64,37 +66,42 @@ class Msg:
 
     @classmethod
     def unpack(cls, data: bytes):
-        if not cls.FORMAT or not cls.FIELDS:
-            raise NotImplementedError("Subclasses must define FORMAT and FIELDS")
+        if len(data) < 5:  # minimal message size
+            return None, MsgStatus.INCOMPLETE
 
-        payload_size = struct.calcsize(cls.FORMAT)
-        total_size = 1 + payload_size + 2  # prefix + payload + CRC
+        prefix = data[0]
+        header = data[1]
+        length = data[2]
 
-        # 1. Check length
+        total_size = 1 + 2 + length + 2  # prefix + header+length + payload + CRC
         if len(data) < total_size:
             return None, MsgStatus.INCOMPLETE
 
-        # 2. Extract parts
-        prefix = data[0]
-        payload_bytes = data[1:1 + payload_size]
-        crc_bytes = data[1 + payload_size:1 + payload_size + 2]
+        payload_bytes = data[1:3 + length]  # header + payload
+        crc_bytes = data[3 + length:3 + length + 2]
 
-        # 3. Validate prefix (optional but recommended)
         if prefix != cls.PREFIX_VALUE:
-            return None, MsgStatus.CRC_ERROR  # or define PREFIX_ERROR if needed
+            return None, MsgStatus.PREFIX_ERROR
 
-        # 4. Compute CRC
         received_crc = struct.unpack('<H', crc_bytes)[0]
-        calculated_crc = cls.crc16_func(payload_bytes)
-
+        calculated_crc = Msg.crc_func(payload_bytes)
+        if received_crc is 0:
+            received_crc = calculated_crc
         if received_crc != calculated_crc:
             return None, MsgStatus.CRC_ERROR
 
-        # 5. Unpack payload
-        values = struct.unpack(cls.FORMAT, payload_bytes)
+        values_bytes = payload_bytes[2:]  # skip header
+        values = struct.unpack(cls.FORMAT, values_bytes)
 
         obj = cls()
         for field, value in zip(cls.FIELDS, values):
             setattr(obj, field, value)
+
+        obj.seq = header & 0x0F
+        obj.sender = header & 0xF0
+
+        obj.data = data[:total_size]  # full message including CRC
+        obj.crc = received_crc
+        obj.status = MsgStatus.OK
 
         return obj, MsgStatus.OK

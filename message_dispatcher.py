@@ -140,10 +140,9 @@ class MessageDispatcher:
             self.rx_buffer.extend(data)
 
         while True:
-            # Minimum message size = 5 bytes (prefix + payload + CRC)
+            # Minimum message size = 5 bytes (prefix + header + length + CRC)
             if len(self.rx_buffer) < 5:
                 break
-
             # Check prefix
             if self.rx_buffer[0] != 0x00:
                 # discard until next possible prefix
@@ -151,25 +150,29 @@ class MessageDispatcher:
                 continue
 
             handled: bool = False
+            error: bool = True
             # Try all registered Msg classes to unpack
             for msg_cls in self.message_map.values():
                 msg_obj, status = msg_cls.unpack(self.rx_buffer)
                 if status == MsgStatus.OK:
                     msg_obj.receieved_at = datetime.now()
                     # Remove processed bytes from buffer
-                    total_len: int = len(msg_obj.pack())
+                    total_len: int = len(msg_obj.data)
                     self.rx_buffer = self.rx_buffer[total_len:]
 
                     self._broadcast(msg_obj, MessageDirection.RX)
 
                     handled = True
                     break  # message processed
+                if status in [ MsgStatus.CRC_ERROR, MsgStatus.PREFIX_ERROR ]:
+                    error = True
             
             # TODO: clean this up, this will be slow and skips unknown types
             if not handled:
                 # TODO: this makes receiving a rolling window, but CRC error would take a couple of polls to filter through
                 # Not enough bytes yet or CRC error
                 # Prevent runaway buffer
-                if len(self.rx_buffer) > 1024:
+                if len(self.rx_buffer) > 1024 or error:
                     self.rx_buffer.pop(0)
+                    error = False
                 break

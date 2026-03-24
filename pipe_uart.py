@@ -24,7 +24,7 @@ class PipeUART(UARTInterface):
     @property
     def in_waiting(self) -> int:
         """Return number of bytes available to read."""
-        return os.fstat(self.fd_read).st_size  # rough estimate
+        return 1024 # Pipe uses non blocking read, otherwise whe have no way of knowing.
     
     def close(self):
         """Close both ends of the pipe cleanly."""

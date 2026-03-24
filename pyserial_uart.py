@@ -3,7 +3,15 @@ from uart_interface import UARTInterface
 
 class PySerialUART(UARTInterface):
     def __init__(self, port: str, baudrate: int = 9600, bytesize: int = 8, parity: str = 'N', stopbits: float = 1, timeout : float | None = 0.1):
-        self.ser = serial.Serial(port, baudrate, bytesize = bytesize, parity=parity, stopbits=stopbits, timeout=timeout)
+        print(f"{port},{baudrate},{bytesize},{parity},{stopbits},{timeout}")
+        self.ser = serial.Serial(
+            port, 
+            baudrate, 
+            bytesize = bytesize, 
+            parity = parity, 
+            stopbits = stopbits, 
+            timeout = timeout
+        )
 
     @classmethod
     def from_config(cls, config:dict=None):
