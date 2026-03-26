@@ -52,7 +52,7 @@ send_payload 0 0x42 0
 
 for ((i=1; i<=count; i++)); do
     # Send status/Poll status
-    send_payload 0 0 0x5 0x10 0 0 0 0
+    send_payload 0 0 0x5 0x10 0 0 0 0 0 0
 done
 
 # Close fd
