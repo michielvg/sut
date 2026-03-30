@@ -10,19 +10,27 @@ class MsgStatus(Enum):
     PREFIX_ERROR = 1
     CRC_ERROR = 2
     INCOMPLETE = 3
+
+class MsgType(Enum):
+    EMPTY = -1
+    TELEMETRY = 0x10
+    MSG_11 = 0x11
+    MSG_12 = 0x12
+    MSG_21 = 0x21
+    MSG_30 = 0X30
+    MSG_31 = 0X31
+    TIMESTAMP = 0X32
+
     
 class Msg:
-    PREFIX_FORMAT = 'BBB' # 3 byte prefix -> 0x00 0xHS 0xLL
     PREFIX_VALUE = 0x00   # example prefix byte
     
-    SUFFIX_FORMAT = 'H'   # 2 byte suffix -> 0xCC 0xCC
-
     FORMAT = ''           # subclasses override
     FIELDS = []           # attribute names in order
 
     crc_func = crcmod.predefined.mkCrcFun('x-25')
 
-    def __init__(self):
+    def __init__(self, type:MsgType = MsgType.EMPTY):
         self.status: MsgStatus = MsgStatus.NA
         self.status_info: str = '' # calc={calc:04X} recv={msg.crc:04X}
         self.sent_at: datetime | None = None
@@ -32,7 +40,7 @@ class Msg:
         
         self.sender: int = 0x00
         self.seq: int = 0x00
-        self.cmd: int | None = None
+        self.type: MsgType = type
         self.crc: int | None = None
 
     def __str__(self):
@@ -41,7 +49,7 @@ class Msg:
     @classmethod
     def reply_for_msg(cls, msg:"Msg"):
         result = cls()
-        result.cmd = msg.cmd
+        result.type = msg.type
         result.seq = msg.seq 
         result.sender = msg.sender | 0x80
 
@@ -53,6 +61,8 @@ class Msg:
         values_bytes = struct.pack(self.FORMAT, *values)
         length = len(values_bytes)
         prefix_bytes = struct.pack("BB", (self.sender | self.seq) & 0xFF, length)
+        if (self.type != MsgType.EMPTY):
+            prefix_bytes += bytes([self.type])
         payload_bytes = prefix_bytes + values_bytes
 
         # 3. Calculate CRC over payload (or include prefix if your protocol does)

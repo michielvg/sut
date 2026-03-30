@@ -53,22 +53,25 @@ SELECT
     */
     rx_parts[3] AS 'Length',
     /*
-    rx_parts[4] AS 'Type',
-    rx_parts[5] AS 'Context',
-    rx_parts[6] AS 'State/Mode (?)',
+    rx_parts[4] AS 'Command',
+    rx_parts[5] AS 'Context (?)',
+    rx_parts[6] AS 'State/Mode (?)', -- 0X03=Charging, 0x01=Active/Discharging
     rx_parts[7] AS '?',
     rx_parts[8] AS '?',
     rx_parts[9] AS '?',
     */
     (CAST('0x' || rx_parts[11] AS INTEGER) << 8) | CAST('0x' || rx_parts[10] AS INTEGER) AS 'Pack Voltage (mV)',
-    rx_parts[12] AS 'Current A', -- uint16_t Discharge current?
-    rx_parts[13] AS '?',         --    
-    rx_parts[14] AS 'Current B', -- uint16_t Charge current?
-    rx_parts[15] AS '?',         --
+    (CAST('0x' || rx_parts[13] AS INTEGER) << 8) | CAST('0x' || rx_parts[12] AS INTEGER) AS 'Max Cell Voltage (mV)',
+    (CAST('0x' || rx_parts[15] AS INTEGER) << 8) | CAST('0x' || rx_parts[14] AS INTEGER) AS 'Min Cell Voltage (mV)',
     rx_parts[16] AS 'TH003/TH004 MAX',
     rx_parts[17] AS 'TH003/TH004 AVG',
     rx_parts[18] AS 'TH002',
-    rx_parts[19] AS 'STATUS A (?)',
-    rx_parts[20] AS 'STATUS B (?)',
+    rx_parts[19] AS 'State of charge (SOC)',
+    rx_parts[20] AS 'Charge counter (?)',
+    rx_parts[21] AS '?',
+    rx_parts[22] AS '?',
+    rx_parts[23] AS '?',
+    rx_parts[24] AS '?',
+    rx_parts[25] AS '?',
     rx_parts
 FROM rx_split WHERE intent = 'Voltage 003'; --'10v on CN001'

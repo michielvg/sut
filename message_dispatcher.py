@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 from typing import Callable, Deque, Dict, List, Union, Optional
-from message import Msg, MsgStatus
+from message import Msg, MsgStatus, MsgType
 from uart_interface import UARTInterface
 from enum import Flag, auto
 from datetime import datetime
@@ -27,14 +27,14 @@ class MessageDispatcher:
         self.tx_queue: Deque[Msg] = deque()
 
     # ----------------------------
-    def register_message_type(self, cmd_byte: int, msg_cls: type[Msg]) -> None:
-        """Associate a command byte with a Msg subclass."""
-        self.message_map[cmd_byte] = msg_cls
+    def register_message_type(self, type_byte: int, msg_cls: type[Msg]) -> None:
+        """Associate a type byte with a Msg subclass."""
+        self.message_map[type_byte] = msg_cls
 
     # ----------------------------
     def subscribe(
         self,
-        cmd_byte: Union[int, str],
+        type_byte: Union[MsgType, str],
         callback: Callable[[Msg, "MessageDispatcher", MessageDirection], None],
         direction: MessageDirection = MessageDirection.RX
     ) -> None:
@@ -42,7 +42,7 @@ class MessageDispatcher:
         Subscribe a callback to a specific command.
 
         Parameters:
-        - cmd_byte: int command or '*' for wildcard subscription
+        - type_byte: int type or '*' for wildcard subscription
         - callback: function taking three arguments:
             1. Msg object
             2. Dispatcher instance
@@ -50,7 +50,7 @@ class MessageDispatcher:
         - direction: MessageDirection flag indicating when to call the subscriber
                     (RX, TX, or BOTH)
         """
-        self.subscribers[cmd_byte].append((callback, direction))
+        self.subscribers[type_byte].append((callback, direction))
 
     # ----------------------------
     def send_message(self, msg_obj: Msg) -> None:
@@ -93,7 +93,7 @@ class MessageDispatcher:
         """
         Broadcast a message to all subscribers based on its command and the given direction.
 
-        Subscribers registered for a specific command are called if the message has a 'cmd' attribute.
+        Subscribers registered for a specific command are called if the message has a 'type' attribute.
         Wildcard subscribers ('*') are always called. Each subscriber is only called if
         its MessageDirection flag matches the provided direction.
 
@@ -102,11 +102,11 @@ class MessageDispatcher:
         - direction: MessageDirection.RX or MessageDirection.TX
         """
         # Determine command if available
-        cmd: Optional[int] = getattr(msg_obj, 'cmd', None)
+        type: Optional[MsgType] = getattr(msg_obj, 'type', None)
 
         # Broadcast to specific command subscribers
-        if cmd in self.subscribers:
-            for cb, dir_flag in self.subscribers[cmd]:
+        if type in self.subscribers:
+            for cb, dir_flag in self.subscribers[type]:
                 if direction in dir_flag:
                     cb(msg_obj, self, direction)
 
