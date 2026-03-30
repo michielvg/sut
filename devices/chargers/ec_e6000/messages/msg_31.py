@@ -4,8 +4,7 @@ class EC_E6000_Msg_31(Msg):
     FORMAT = '16B'  # example: seq, len, cmd, pad, voltage, 3 temperatures
     FIELDS = ['b4', 'b5', 'b6', 'b7',
               'b8', 'b9', 'b10', 'b11',
-              'b12', 'b13', 'b14', 'b15',
-              'b16', 'b17', 'b18', 'b19']
+              'b12', 'b13']
 
     # h9F h01 hA9 h01 h01 h00 h02 h00 h1F h00 
     def __init__(self, b4 = 0x9F, b5 = 0x01, b6 = 0xA9, b7 = 0x01,
