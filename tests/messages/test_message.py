@@ -7,7 +7,7 @@ from messages.message import Msg, MsgStatus, MsgType
 # ------------------------
 # Test helper subclass
 # ------------------------
-class TestMsg(Msg):
+class FakeMsg(Msg):
     FORMAT = "<B"           # one byte payload
     FIELDS = ["value"]
     TYPE = MsgType.MSG_30
@@ -21,7 +21,7 @@ class TestMsg(Msg):
 # pack()
 # ------------------------
 def test_pack_creates_valid_message():
-    msg = TestMsg(value=0x42)
+    msg = FakeMsg(value=0x42)
     msg.sender = 0x40
     msg.seq = 0x01
 
@@ -51,13 +51,13 @@ def test_pack_creates_valid_message():
 # unpack()
 # ------------------------
 def test_unpack_valid_message():
-    msg = TestMsg(value=0x55)
+    msg = FakeMsg(value=0x55)
     msg.sender = 0x40
     msg.seq = 0x02
 
     data = msg.pack()
 
-    unpacked, status = TestMsg.unpack(data)
+    unpacked, status = FakeMsg.unpack(data)
 
     assert status == MsgStatus.OK
     assert unpacked.value == 0x55
@@ -69,32 +69,32 @@ def test_unpack_valid_message():
 def test_unpack_incomplete():
     data = b"\x00\x40\x01"  # too short
 
-    obj, status = TestMsg.unpack(data)
+    obj, status = FakeMsg.unpack(data)
 
     assert obj is None
     assert status == MsgStatus.INCOMPLETE
 
 
 def test_unpack_prefix_error():
-    msg = TestMsg(value=0x33)
+    msg = FakeMsg(value=0x33)
     data = bytearray(msg.pack())
 
     data[0] = 0xFF  # wrong prefix
 
-    obj, status = TestMsg.unpack(bytes(data))
+    obj, status = FakeMsg.unpack(bytes(data))
 
     assert obj is None
     assert status == MsgStatus.PREFIX_ERROR
 
 
 def test_unpack_crc_error():
-    msg = TestMsg(value=0x22)
+    msg = FakeMsg(value=0x22)
     data = bytearray(msg.pack())
 
     # Corrupt CRC
     data[-1] ^= 0xFF
 
-    obj, status = TestMsg.unpack(bytes(data))
+    obj, status = FakeMsg.unpack(bytes(data))
 
     assert obj is None
     assert status == MsgStatus.CRC_ERROR
@@ -104,11 +104,11 @@ def test_unpack_crc_error():
 # reply_for_msg()
 # ------------------------
 def test_reply_for_msg():
-    original = TestMsg(value=0x11)
+    original = FakeMsg(value=0x11)
     original.sender = 0x40
     original.seq = 0x03
 
-    reply = TestMsg.reply_for_msg(original)
+    reply = FakeMsg.reply_for_msg(original)
 
     assert reply is not None
 
@@ -121,7 +121,7 @@ def test_reply_for_msg():
 # __str__()
 # ------------------------
 def test_str_representation():
-    msg = TestMsg(value=0xAA)
+    msg = FakeMsg(value=0xAA)
     msg.sender = 0x40
     msg.seq = 0x01
 
