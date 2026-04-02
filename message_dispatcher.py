@@ -1,7 +1,8 @@
 from collections import defaultdict, deque
-from typing import Callable, Deque, Dict, List, Union, Optional
-from message import Msg, MsgStatus, MsgType
-from uart_interface import UARTInterface
+from itertools import chain
+from typing import Callable, Deque, Dict, List
+from messages.message import Msg, MsgStatus, MsgType
+from uart.uart_interface import UARTInterface
 from enum import Flag, auto
 from datetime import datetime
 
@@ -9,32 +10,54 @@ class MessageDirection(Flag):
     RX = auto()    # subscriber wants incoming messages
     TX = auto()    # subscriber wants outgoing messages
     BOTH = RX | TX # convenience flag
+    
 
 # --- Event-driven Dispatcher ---
 class MessageDispatcher:
+
+    # ----------------------------
+    def _leaf_subclasses(cls):
+        leaves = set()
+
+        def walk(c):
+            subs = c.__subclasses__()
+            if not subs:
+                leaves.add(c)
+            else:
+                for s in subs:
+                    walk(s)
+
+        walk(cls)
+        return leaves
+    
+    # ----------------------------
+    def _register_message_types(self) -> None:
+        """Associate a type byte with a Msg subclass."""
+        message_types = MessageDispatcher._leaf_subclasses(Msg)
+        for message_type in message_types:
+            self.message_map[message_type].append(message_type)
+    
+    # ----------------------------
     def __init__(self, uart: UARTInterface) -> None:
         """
         uart: any object implementing UARTInterface (e.g., pyserial.Serial or a mock)
         """
         self.uart: UARTInterface = uart
         # Maps command byte or '*' → list of callbacks
-        self.subscribers: Dict[Union[int, str], List[tuple[Callable[[Msg, "MessageDispatcher", MessageDirection], None], MessageDirection]]] = defaultdict(list)
+        self.subscribers: Dict[MsgType | str, List[tuple[Callable[[Msg, "MessageDispatcher", MessageDirection], None], MessageDirection]]] = defaultdict(list)
         # Maps command byte → Msg subclass
-        self.message_map: Dict[int, type[Msg]] = {}
+        self.message_map: Dict[MsgType, List[type[Msg]]] = defaultdict(list)
         # Receive buffer for partial messages
         self.rx_buffer: bytearray = bytearray()
         # FIFO send queue
         self.tx_queue: Deque[Msg] = deque()
 
-    # ----------------------------
-    def register_message_type(self, type_byte: int, msg_cls: type[Msg]) -> None:
-        """Associate a type byte with a Msg subclass."""
-        self.message_map[type_byte] = msg_cls
+        self._register_message_types()
 
     # ----------------------------
     def subscribe(
         self,
-        type_byte: Union[MsgType, str],
+        type: MsgType | str,
         callback: Callable[[Msg, "MessageDispatcher", MessageDirection], None],
         direction: MessageDirection = MessageDirection.RX
     ) -> None:
@@ -42,7 +65,7 @@ class MessageDispatcher:
         Subscribe a callback to a specific command.
 
         Parameters:
-        - type_byte: int type or '*' for wildcard subscription
+        - type: int type or '*' for wildcard subscription
         - callback: function taking three arguments:
             1. Msg object
             2. Dispatcher instance
@@ -50,7 +73,7 @@ class MessageDispatcher:
         - direction: MessageDirection flag indicating when to call the subscriber
                     (RX, TX, or BOTH)
         """
-        self.subscribers[type_byte].append((callback, direction))
+        self.subscribers[type].append((callback, direction))
 
     # ----------------------------
     def send_message(self, msg_obj: Msg) -> None:
@@ -102,7 +125,7 @@ class MessageDispatcher:
         - direction: MessageDirection.RX or MessageDirection.TX
         """
         # Determine command if available
-        type: Optional[MsgType] = getattr(msg_obj, 'type', None)
+        type: MsgType | None = getattr(msg_obj, 'type', None)
 
         # Broadcast to specific command subscribers
         if type in self.subscribers:
@@ -120,6 +143,7 @@ class MessageDispatcher:
         """
         Send queued messages to UART.
         """
+        # TODO: Keep track of and set .seq for each message send.
         while self.tx_queue:
             msg_obj = self.tx_queue.popleft()
             msg_bytes = msg_obj.pack()
@@ -150,12 +174,12 @@ class MessageDispatcher:
                 continue
 
             handled: bool = False
-            error: bool = True
+            error: bool = False
             # Try all registered Msg classes to unpack
-            for msg_cls in self.message_map.values():
+            for msg_cls in chain.from_iterable(self.message_map.values()):
                 msg_obj, status = msg_cls.unpack(self.rx_buffer)
                 if status == MsgStatus.OK:
-                    msg_obj.receieved_at = datetime.now()
+                    msg_obj.received_at = datetime.now()
                     # Remove processed bytes from buffer
                     total_len: int = len(msg_obj.data)
                     self.rx_buffer = self.rx_buffer[total_len:]
@@ -164,15 +188,14 @@ class MessageDispatcher:
 
                     handled = True
                     break  # message processed
-                if status in [ MsgStatus.CRC_ERROR, MsgStatus.PREFIX_ERROR ]:
+                elif status in [ MsgStatus.CRC_ERROR, MsgStatus.PREFIX_ERROR ]:
                     error = True
             
             # TODO: clean this up, this will be slow and skips unknown types
             if not handled:
                 # TODO: this makes receiving a rolling window, but CRC error would take a couple of polls to filter through
                 # Not enough bytes yet or CRC error
-                # Prevent runaway buffer
-                if len(self.rx_buffer) > 1024 or error:
+                # Cleanup: prevent runaway buffer, only discard if too long or error
+                if not handled and (len(self.rx_buffer) > 1024 or error):
                     self.rx_buffer.pop(0)
-                    error = False
                 break

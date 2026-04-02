@@ -1,4 +1,4 @@
-from device import Device
+from devices.device import Device
 import json
 import os
 from datetime import datetime, timezone

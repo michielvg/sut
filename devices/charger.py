@@ -1,7 +1,7 @@
 
 from enum import Enum
 
-from device import Device
+from devices.device import Device
 from message_dispatcher import MessageDispatcher
 
 

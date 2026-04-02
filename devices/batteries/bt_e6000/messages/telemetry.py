@@ -1,8 +1,8 @@
-import enum
+from enum import Enum
 
-from message import Msg, MsgType
+from messages.message import Msg, MsgType
 
-class BT_E6000_TelemetryState(enum):
+class BT_E6000_TelemetryState(Enum):
     UNKNOWN = 0x00
     DISCHARGING = 0x01
     CHARGING = 0X03
@@ -20,7 +20,7 @@ class BT_E6000_TelemetryMsg(Msg):
                  min_cell_volgate_mv = 0, max_temp_c=0, avg_temp_c=0, th002_temp_c=0,
                  state_of_charge_pct = 0, charge_counter = 0, b20 = 0, b21=0, 
                  b22 = 0, b23 = 0, b24=0):
-        super().init(MsgType.TELEMETRY)
+        super().__init__(MsgType.TELEMETRY)
 
         self.b4 = b4
         self.state = state

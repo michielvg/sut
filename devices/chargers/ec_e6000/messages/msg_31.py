@@ -1,4 +1,4 @@
-from message import Msg, MsgType
+from messages.message import Msg, MsgType
 
 class EC_E6000_Msg_31(Msg):
     FORMAT = '16B'  # example: seq, len, cmd, pad, voltage, 3 temperatures
@@ -10,7 +10,7 @@ class EC_E6000_Msg_31(Msg):
     def __init__(self, b4 = 0x9F, b5 = 0x01, b6 = 0xA9, b7 = 0x01,
                  b8 = 0x01, b9 = 0x00, b10 = 0x00, b11 = 0x02,
                  b12 = 0x1F, b13 = 0x00):
-        super().init(MsgType.MSG_31)
+        super().__init__(MsgType.MSG_31)
 
         self.b4 = b4
         self.b5 = b5

@@ -17,11 +17,11 @@ import crcmod.predefined
 
 from config import Config
 from logger import NDJSONLogger
-from message import Msg, MsgStatus
+from messages.message import Msg, MsgStatus
 from message_dispatcher import MessageDirection, MessageDispatcher
-from mock_uart import MockUART
-from pipe_uart import PipeUART
-from pyserial_uart import PySerialUART
+from uart.mock_uart import MockUART
+from uart.pipe_uart import PipeUART
+from uart.pyserial_uart import PySerialUART
 
 # ---------- CONFIG ----------
 DEVICE = "/dev/serial0"

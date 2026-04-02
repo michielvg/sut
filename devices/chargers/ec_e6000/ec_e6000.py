@@ -1,11 +1,8 @@
 
 import time
 
+from messages.message import Msg, MsgType
 from devices.charger import Charger, ChargerModel, ChargerState
-from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
-from devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
-from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
-from message import Msg, MsgType
 from message_dispatcher import MessageDirection, MessageDispatcher
 
 class EC_E6000(Charger):
@@ -14,7 +11,8 @@ class EC_E6000(Charger):
         super().__init__(ChargerModel.EC_E6000, dispatcher)
  
     def empty_response_handler(self, msg: Msg, disp: MessageDispatcher, direction: MessageDirection):
-        if (self.state == ChargerState.DISCONNECTED):
+        if (self.state == ChargerState.DISCONNECTED
+            and msg.sender == (0x40 | 0x80)):
             self.state = ChargerState.CONNECTED
     def msg_30_response_handler(self, msg: Msg, disp: MessageDispatcher, direction: MessageDirection):
         if (self.state == ChargerState.CONNECTED):
@@ -38,12 +36,18 @@ class EC_E6000(Charger):
         if now - self.last_poll_time < 1.0:
             return
         self.last_poll_time = now
+
+        from .messages.msg_30 import EC_E6000_Msg_30
+        from .messages.msg_31 import EC_E6000_Msg_31
+        from .messages.telemetry import EC_E6000_TelemetryMsg
         
         # POLLING first, will be active most of the time.
         if (self.state == ChargerState.POLLING): # Send telemetry request.
             self.dispatcher.send_message(EC_E6000_TelemetryMsg())
             return
         if (self.state == ChargerState.DISCONNECTED): # Send PING/Empty Message
+            msg = Msg()         # Emtpy message
+            msg.sender = 0x40   # 0x40 as sender
             self.dispatcher.send_message(Msg())
             return
         if (self.state == ChargerState.CONNECTED):    # Send 0X30

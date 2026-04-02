@@ -1,5 +1,5 @@
 import os
-from uart_interface import UARTInterface
+from uart.uart_interface import UARTInterface
 
 class PipeUART(UARTInterface):
     """Reads/writes from a pipe (FIFO)."""

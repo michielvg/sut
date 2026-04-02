@@ -1,4 +1,4 @@
-from uart_interface import UARTInterface
+from uart.uart_interface import UARTInterface
 
 class MockUART(UARTInterface):
     def __init__(self):

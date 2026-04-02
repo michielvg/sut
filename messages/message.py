@@ -14,9 +14,9 @@ class MsgStatus(Enum):
 class MsgType(Enum):
     EMPTY = -1
     TELEMETRY = 0x10
-    MSG_11 = 0x11
-    MSG_12 = 0x12
-    MSG_21 = 0x21
+    MSG_11 = 0x11 # From DU -> START
+    MSG_12 = 0x12 # From DU -> START
+    MSG_21 = 0x21 # From DU -> END/TIMEOUT
     MSG_30 = 0X30
     MSG_31 = 0X31
     TIMESTAMP = 0X32
@@ -27,6 +27,7 @@ class Msg:
     
     FORMAT = ''           # subclasses override
     FIELDS = []           # attribute names in order
+    TYPE = MsgType.EMPTY
 
     crc_func = crcmod.predefined.mkCrcFun('x-25')
 
@@ -34,7 +35,7 @@ class Msg:
         self.status: MsgStatus = MsgStatus.NA
         self.status_info: str = '' # calc={calc:04X} recv={msg.crc:04X}
         self.sent_at: datetime | None = None
-        self.receieved_at: datetime | None = None
+        self.received_at: datetime | None = None
 
         self.data: bytes =  bytes()
         
@@ -53,6 +54,8 @@ class Msg:
         result.seq = msg.seq 
         result.sender = msg.sender | 0x80
 
+        return result
+
     def pack(self):
         # 1. Collect payload values
         values = [getattr(self, f) for f in self.FIELDS]
@@ -60,9 +63,11 @@ class Msg:
         # 2. Pack payload
         values_bytes = struct.pack(self.FORMAT, *values)
         length = len(values_bytes)
+        if (self.type != MsgType.EMPTY):
+            length += 1
         prefix_bytes = struct.pack("BB", (self.sender | self.seq) & 0xFF, length)
         if (self.type != MsgType.EMPTY):
-            prefix_bytes += bytes([self.type])
+            prefix_bytes += bytes([self.type.value])
         payload_bytes = prefix_bytes + values_bytes
 
         # 3. Calculate CRC over payload (or include prefix if your protocol does)
@@ -95,17 +100,21 @@ class Msg:
 
         received_crc = struct.unpack('<H', crc_bytes)[0]
         calculated_crc = Msg.crc_func(payload_bytes)
-        if received_crc is 0:
+        if received_crc == 0:
             received_crc = calculated_crc
         if received_crc != calculated_crc:
             return None, MsgStatus.CRC_ERROR
 
-        values_bytes = payload_bytes[2:]  # skip header
-        values = struct.unpack(cls.FORMAT, values_bytes)
-
         obj = cls()
-        for field, value in zip(cls.FIELDS, values):
-            setattr(obj, field, value)
+
+        if length > 0:
+            obj.type = MsgType(payload_bytes[2])
+
+            values_bytes = payload_bytes[3:]  # skip header
+            values = struct.unpack(cls.FORMAT, values_bytes)
+
+            for field, value in zip(cls.FIELDS, values):
+                setattr(obj, field, value)
 
         obj.seq = header & 0x0F
         obj.sender = header & 0xF0
