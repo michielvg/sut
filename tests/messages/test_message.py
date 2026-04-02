@@ -35,7 +35,7 @@ def test_pack_creates_valid_message():
     length = data[2]
 
     assert header == (msg.sender | msg.seq)
-    assert length == 1  # one byte payload
+    assert length == 2  # type + one byte payload
 
     # Type byte exists (non-empty)
     assert data[3] == MsgType.MSG_30.value
