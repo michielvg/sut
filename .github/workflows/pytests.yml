@@ -11,6 +11,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # this gives GITHUB_TOKEN write access to repo contents for this job only
 
     steps:
       # Checkout code
