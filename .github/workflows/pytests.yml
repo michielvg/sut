@@ -82,7 +82,7 @@ jobs:
           # Use GITHUB_TOKEN to authenticate push
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git add docs/coverage.svg
-          git commit -m "Update coverage badge" || echo "No changes to commit"
+          git diff --cached --quiet || git commit -m "Update coverage badge"
           git push origin HEAD:${GITHUB_REF_NAME}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
