@@ -1,4 +1,6 @@
 # SUT — Shimano UART Tool
+![Coverage](docs/coverage.svg)
+![Tests](https://github.com/michielvg/sut/actions/workflows/pytests.yml/badge.svg)
 
 SUT (Shimano UART Tool) is a Python tool for monitoring and analyzing Shimano e-bike UART traffic using a raspberry pi.
 It can capture messages from Shimano components (battery, motor, display) and optionally send test data via a named pipe.
