@@ -1,13 +1,13 @@
 # tests/integration/devices/chargers/test_ec_e6000_integration.py
 import pytest
 
-from devices.batteries.bt_e6000.bt_e6000 import BT_E6000
-from devices.batteries.bt_e6000.messages.msg_30 import BT_E6000_Msg_30
-from devices.batteries.bt_e6000.messages.msg_31 import BT_E6000_Msg_31
-from devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg
-from message_dispatcher import MessageDispatcher, MessageDirection
-from uart.mock_uart import MockUART
-from messages.message import Msg, MsgType
+from sut.devices.batteries.bt_e6000.bt_e6000 import BT_E6000
+from sut.devices.batteries.bt_e6000.messages.msg_30 import BT_E6000_Msg_30
+from sut.devices.batteries.bt_e6000.messages.msg_31 import BT_E6000_Msg_31
+from sut.devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg
+from sut.message_dispatcher import MessageDispatcher, MessageDirection
+from sut.uart.mock_uart import MockUART
+from sut.messages.message import Msg, MsgType
 
 
 @pytest.fixture

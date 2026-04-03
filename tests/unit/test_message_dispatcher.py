@@ -3,10 +3,10 @@ import pytest
 from unittest.mock import MagicMock
 from datetime import datetime, timedelta
 
-from messages.message import Msg, MsgType, MsgStatus
-from uart.uart_interface import UARTInterface
-from devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg
-from message_dispatcher import MessageDispatcher, MessageDirection
+from sut.messages.message import Msg, MsgType, MsgStatus
+from sut.uart.uart_interface import UARTInterface
+from sut.devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg
+from sut.message_dispatcher import MessageDispatcher, MessageDirection
 
 
 # ------------------------
@@ -132,7 +132,7 @@ def test_leaf_subclasses():
     class SubSub(Sub1):
         pass
 
-    from message_dispatcher import MessageDispatcher
+    from sut.message_dispatcher import MessageDispatcher
 
     leaves = MessageDispatcher._leaf_subclasses(Base)
     assert SubSub in leaves

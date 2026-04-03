@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from logger import NDJSONLogger
+from sut.logger import NDJSONLogger
 
 # -------------------------
 # Helpers
@@ -36,7 +36,7 @@ def test_logger_initialization_with_config(tmp_path):
     assert logger.fsync is True
 
 
-@patch("logger.NDJSONLogger._print_dev_menu")
+@patch("sut.logger.NDJSONLogger._print_dev_menu")
 def test_logger_initialization_without_device(mock_menu, tmp_path):
     logger = NDJSONLogger(src="SRC2", intent="TEST2", base_path=str(tmp_path))
     mock_menu.assert_called_once()

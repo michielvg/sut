@@ -2,10 +2,10 @@
 import pytest
 from unittest.mock import MagicMock
 
-from devices.batteries import BT_E6000
-from devices.batteries.bt_e6000.messages import *
-from messages import Msg, MsgType
-from message_dispatcher import MessageDispatcher, MessageDirection
+from sut.devices.batteries import BT_E6000
+from sut.devices.batteries.bt_e6000.messages import *
+from sut.messages import Msg, MsgType
+from sut.message_dispatcher import MessageDispatcher, MessageDirection
 
 
 # ------------------------

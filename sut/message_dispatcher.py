@@ -1,9 +1,9 @@
 from collections import defaultdict, deque
 from itertools import chain
 from typing import Callable, Deque, Dict, List
-from messages.empty import EmptyMsg
-from messages.message import Msg, MsgStatus, MsgType
-from uart.uart_interface import UARTInterface
+from sut.messages.empty import EmptyMsg
+from sut.messages.message import Msg, MsgStatus, MsgType
+from sut.uart.uart_interface import UARTInterface
 from enum import Flag, auto
 from datetime import datetime
 

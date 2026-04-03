@@ -1,7 +1,7 @@
 # tests/test_ec_e6000_messages.py
 import pytest
-from messages.message import MsgType
-from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
+from sut.messages.message import MsgType
+from sut.devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
 
 # ------------------------
 # Smoke test: telemetry message

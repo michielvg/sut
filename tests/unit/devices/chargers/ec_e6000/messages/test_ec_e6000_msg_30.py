@@ -1,7 +1,7 @@
 # tests/test_ec_e6000_msg_30.py
 import pytest
-from messages.message import MsgType
-from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
+from sut.messages.message import MsgType
+from sut.devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
 
 # ------------------------
 # Smoke test: MSG_30 message

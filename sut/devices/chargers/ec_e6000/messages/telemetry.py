@@ -1,4 +1,4 @@
-from messages.message import Msg, MsgType
+from sut.messages.message import Msg, MsgType
 
 class EC_E6000_TelemetryMsg(Msg):
     FORMAT = '4B'  # example: seq, len, cmd, pad, voltage, 3 temperatures

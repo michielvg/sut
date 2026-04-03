@@ -1,13 +1,13 @@
 # tests/devices/test_device.py
 import pytest
-from devices.device import Device
+from sut.devices.device import Device
 from unittest.mock import MagicMock
 
 # ------------------------
 # Test that Device cannot be instantiated directly
 # ------------------------
 def test_device_abstract_enforcement():
-    from devices.device import Device
+    from sut.devices.device import Device
     with pytest.raises(TypeError):
         Device(model="X", dispatcher=MagicMock())
 

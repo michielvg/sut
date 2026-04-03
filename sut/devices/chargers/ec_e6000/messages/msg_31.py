@@ -1,4 +1,4 @@
-from messages.message import Msg, MsgType
+from sut.messages.message import Msg, MsgType
 
 class EC_E6000_Msg_31(Msg):
     FORMAT = '10B'  # example: seq, len, cmd, pad, voltage, 3 temperatures

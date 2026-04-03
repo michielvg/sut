@@ -1,6 +1,6 @@
 # tests/messages/test_empty.py
 import pytest
-from messages.empty import EmptyMsg
+from sut.messages.empty import EmptyMsg
 
 # ------------------------
 # Smoke test for EmptyMsg

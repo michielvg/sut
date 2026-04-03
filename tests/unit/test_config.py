@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from config import Config
+from sut.config import Config
 
 # -------------------------
 # Helpers

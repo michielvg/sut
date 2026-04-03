@@ -1,4 +1,4 @@
-from messages.message import Msg, MsgType
+from sut.messages.message import Msg, MsgType
 
 class TimestampMsg(Msg):
     FORMAT = '6B' 

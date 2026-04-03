@@ -1,7 +1,7 @@
 # tests/unit/uart/test_pipe_uart.py
 import os
 import pytest
-from uart.pipe_uart import PipeUART
+from sut.uart.pipe_uart import PipeUART
 
 # ------------------------
 # Fixtures

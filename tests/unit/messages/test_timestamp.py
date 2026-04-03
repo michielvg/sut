@@ -1,7 +1,7 @@
 # tests/messages/test_timestamp.py
 import pytest
-from messages.timestamp import TimestampMsg
-from messages.message import Msg
+from sut.messages.timestamp import TimestampMsg
+from sut.messages.message import Msg
 
 # ------------------------
 # Test TimestampMsg pack

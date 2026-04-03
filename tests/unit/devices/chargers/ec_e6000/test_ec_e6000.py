@@ -2,10 +2,10 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from devices.chargers import EC_E6000
-from devices.charger import ChargerState
-from messages.message import Msg, MsgType
-from message_dispatcher import MessageDirection
+from sut.devices.chargers import EC_E6000
+from sut.devices.charger import ChargerState
+from sut.messages.message import Msg, MsgType
+from sut.message_dispatcher import MessageDirection
 
 
 # ------------------------
@@ -82,7 +82,7 @@ def test_poll_disconnected_sends_empty(mock_time, charger, mock_dispatcher):
 
 
 def test_empty_response_triggers_msg_30(charger, mock_dispatcher):
-    from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
+    from sut.devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
 
     charger.state = ChargerState.DISCONNECTED
 
@@ -95,7 +95,7 @@ def test_empty_response_triggers_msg_30(charger, mock_dispatcher):
     assert isinstance(sent_msg, EC_E6000_Msg_30)
 
 def test_msg_30_response_triggers_msg_31(charger, mock_dispatcher):
-    from devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
+    from sut.devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
 
     charger.state = ChargerState.CONNECTED
 
@@ -115,7 +115,7 @@ def test_poll_polling_sends_telemetry(mock_time, charger, mock_dispatcher):
 
     charger.poll()
     sent_msg = mock_dispatcher.send_message.call_args[0][0]
-    from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
+    from sut.devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
     assert isinstance(sent_msg, EC_E6000_TelemetryMsg)
 
 
@@ -159,9 +159,9 @@ def test_poll_unknown_state_sends_nothing(mock_dispatcher, charger):
 def test_full_handshake_flow(charger, mock_dispatcher):
     """Charger should progress through full handshake and send correct messages."""
 
-    from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
-    from devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
-    from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
+    from sut.devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
+    from sut.devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
+    from sut.devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
 
     # Start disconnected
     charger.state = ChargerState.DISCONNECTED

@@ -1,4 +1,4 @@
-from messages.message import Msg, MsgType
+from sut.messages.message import Msg, MsgType
 
 class BT_E6000_Msg_31(Msg):
     FORMAT = '17B' 

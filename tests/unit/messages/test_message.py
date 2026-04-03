@@ -1,7 +1,7 @@
 import pytest
 import struct
 
-from messages.message import Msg, MsgStatus, MsgType
+from sut.messages.message import Msg, MsgStatus, MsgType
 
 
 # ------------------------

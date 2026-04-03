@@ -1,7 +1,7 @@
 # tests/test_bt_e6000_msg_30.py
 import pytest
-from messages.message import MsgType
-from devices.batteries.bt_e6000.messages.msg_30 import BT_E6000_Msg_30
+from sut.messages.message import MsgType
+from sut.devices.batteries.bt_e6000.messages.msg_30 import BT_E6000_Msg_30
 
 # ------------------------
 # Smoke test: Msg_30

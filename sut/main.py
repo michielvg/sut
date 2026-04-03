@@ -15,13 +15,13 @@ from datetime import datetime, timedelta
 import traceback
 import crcmod.predefined
 
-from config import Config
-from logger import NDJSONLogger
-from messages.message import Msg, MsgStatus
-from message_dispatcher import MessageDirection, MessageDispatcher
-from uart.mock_uart import MockUART
-from uart.pipe_uart import PipeUART
-from uart.pyserial_uart import PySerialUART
+from sut.config import Config
+from sut.logger import NDJSONLogger
+from sut.messages.message import Msg, MsgStatus
+from sut.message_dispatcher import MessageDirection, MessageDispatcher
+from sut.uart.mock_uart import MockUART
+from sut.uart.pipe_uart import PipeUART
+from sut.uart.pyserial_uart import PySerialUART
 
 # ---------- CONFIG ----------
 DEVICE = "/dev/serial0"

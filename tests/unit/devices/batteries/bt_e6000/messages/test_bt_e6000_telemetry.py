@@ -1,7 +1,7 @@
 # tests/test_bt_e6000_messages.py
 import pytest
-from messages.message import MsgType
-from devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg, BT_E6000_TelemetryState
+from sut.messages.message import MsgType
+from sut.devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg, BT_E6000_TelemetryState
 
 # ------------------------
 # Smoke test: telemetry message

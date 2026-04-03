@@ -1,7 +1,7 @@
 
-from messages import Msg, MsgType
-from devices import Battery, BatteryModel
-from message_dispatcher import MessageDispatcher, MessageDirection
+from sut.messages import Msg, MsgType
+from sut.devices import Battery, BatteryModel
+from sut.message_dispatcher import MessageDispatcher, MessageDirection
 
 # Battery doesn't need to be a state machine, it just replies to requests.
 class BT_E6000(Battery):

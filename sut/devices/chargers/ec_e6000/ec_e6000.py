@@ -1,9 +1,9 @@
 
 import time
 
-from messages.message import Msg, MsgType
-from devices.charger import Charger, ChargerModel, ChargerState
-from message_dispatcher import MessageDirection, MessageDispatcher
+from sut.messages.message import Msg, MsgType
+from sut.devices.charger import Charger, ChargerModel, ChargerState
+from sut.message_dispatcher import MessageDirection, MessageDispatcher
 
 class EC_E6000(Charger):
     def __init__(self, dispatcher: MessageDispatcher):

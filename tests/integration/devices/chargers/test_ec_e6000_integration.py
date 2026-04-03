@@ -2,14 +2,14 @@
 import pytest
 import time
 
-from devices.charger import ChargerState
-from devices.chargers.ec_e6000.ec_e6000 import EC_E6000
-from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
-from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
-from devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
-from message_dispatcher import MessageDispatcher, MessageDirection
-from uart.mock_uart import MockUART
-from messages.message import Msg, MsgType
+from sut.devices.charger import ChargerState
+from sut.devices.chargers.ec_e6000.ec_e6000 import EC_E6000
+from sut.devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
+from sut.devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
+from sut.devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
+from sut.message_dispatcher import MessageDispatcher, MessageDirection
+from sut.uart.mock_uart import MockUART
+from sut.messages.message import Msg, MsgType
 
 
 @pytest.fixture
@@ -63,9 +63,9 @@ def test_charger_state_transition_msg_31(charger, dispatcher):
 
 
 def test_charger_full_flow(charger, dispatcher):
-    from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
-    from devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
-    from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
+    from sut.devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
+    from sut.devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
+    from sut.devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
 
     # ------------------------
     # Step 1: poll() → send EMPTY

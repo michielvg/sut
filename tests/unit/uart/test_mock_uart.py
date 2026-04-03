@@ -1,6 +1,6 @@
 # tests/unit/uart/test_mock_uart.py
 import pytest
-from uart.mock_uart import MockUART
+from sut.uart.mock_uart import MockUART
 
 # ------------------------
 # Fixtures

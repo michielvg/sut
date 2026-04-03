@@ -1,8 +1,8 @@
 
 from enum import Enum
 
-from devices.device import Device
-from message_dispatcher import MessageDispatcher
+from sut.devices.device import Device
+from sut.message_dispatcher import MessageDispatcher
 
 
 class ChargerModel(Enum):

@@ -1,17 +1,17 @@
 # tests/integration/test_charger_battery_interaction.py
 import pytest
-from devices.chargers.ec_e6000.ec_e6000 import EC_E6000
-from devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
-from devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
-from devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
-from devices.batteries.bt_e6000.bt_e6000 import BT_E6000
-from devices.batteries.bt_e6000.messages.msg_30 import BT_E6000_Msg_30
-from devices.batteries.bt_e6000.messages.msg_31 import BT_E6000_Msg_31
-from devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg
-from messages.message import Msg, MsgType
-from message_dispatcher import MessageDispatcher, MessageDirection
-from devices.charger import ChargerState
-from uart.mock_uart import MockUART
+from sut.devices.chargers.ec_e6000.ec_e6000 import EC_E6000
+from sut.devices.chargers.ec_e6000.messages.msg_30 import EC_E6000_Msg_30
+from sut.devices.chargers.ec_e6000.messages.msg_31 import EC_E6000_Msg_31
+from sut.devices.chargers.ec_e6000.messages.telemetry import EC_E6000_TelemetryMsg
+from sut.devices.batteries.bt_e6000.bt_e6000 import BT_E6000
+from sut.devices.batteries.bt_e6000.messages.msg_30 import BT_E6000_Msg_30
+from sut.devices.batteries.bt_e6000.messages.msg_31 import BT_E6000_Msg_31
+from sut.devices.batteries.bt_e6000.messages.telemetry import BT_E6000_TelemetryMsg
+from sut.messages.message import Msg, MsgType
+from sut.message_dispatcher import MessageDispatcher, MessageDirection
+from sut.devices.charger import ChargerState
+from sut.uart.mock_uart import MockUART
 
 
 @pytest.fixture

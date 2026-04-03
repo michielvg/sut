@@ -1,4 +1,4 @@
-from devices.device import Device
+from sut.devices.device import Device
 import json
 import os
 from datetime import datetime, timezone

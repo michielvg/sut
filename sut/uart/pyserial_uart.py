@@ -1,5 +1,5 @@
 import serial
-from uart.uart_interface import UARTInterface
+from sut.uart.uart_interface import UARTInterface
 
 class PySerialUART(UARTInterface):
     def __init__(self, port: str, baudrate: int = 9600, bytesize: int = 8, parity: str = 'N', stopbits: float = 1, timeout : float | None = 0.1):

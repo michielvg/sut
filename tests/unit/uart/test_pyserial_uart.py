@@ -1,14 +1,14 @@
 # tests/unit/uart/test_pyserial_uart.py
 import pytest
 from unittest.mock import MagicMock, patch
-from uart.pyserial_uart import PySerialUART
+from sut.uart.pyserial_uart import PySerialUART
 
 # ------------------------
 # Fixtures
 # ------------------------
 @pytest.fixture
 def mock_serial():
-    with patch("uart.pyserial_uart.serial.Serial") as mock_ser_cls:
+    with patch("sut.uart.pyserial_uart.serial.Serial") as mock_ser_cls:
         mock_ser = MagicMock()
         mock_ser.read.return_value = b"x"
         mock_ser.write.return_value = 1

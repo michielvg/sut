@@ -1,6 +1,6 @@
 # tests/unit/uart/test_uart_interface.py
 import pytest
-from uart.uart_interface import UARTInterface
+from sut.uart.uart_interface import UARTInterface
 
 # ------------------------
 # Abstract class tests
