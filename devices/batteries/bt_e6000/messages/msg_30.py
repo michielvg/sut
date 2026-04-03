@@ -7,6 +7,7 @@ class BT_E6000_Msg_30(Msg):
               'b12', 'b13', 'b14', 'b15',
               'b16', 'b17', 'b18', 'b19',
               'b20']
+    TYPE = MsgType.MSG_30
 
     # h00 h54 h33 h81 h44 h83 h53 h92 h0B h47 hC2 hEF h13 hF5 h3B hC7 hC5 
     def __init__(self, 
@@ -27,7 +28,7 @@ class BT_E6000_Msg_30(Msg):
                  b18 = 0x3B, 
                  b19 = 0xC7,
                  b20 = 0xC5):
-        super().__init__(MsgType.MSG_30)
+        super().__init__(BT_E6000_Msg_30.TYPE)
 
         self.b4 = b4
         self.b5 = b5

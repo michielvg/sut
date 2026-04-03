@@ -10,6 +10,7 @@ class MsgStatus(Enum):
     PREFIX_ERROR = 1
     CRC_ERROR = 2
     INCOMPLETE = 3
+    WRONG_TYPE = 4
 
 class MsgType(Enum):
     EMPTY = -1
@@ -59,7 +60,8 @@ class Msg:
     def pack(self):
         # 1. Collect payload values
         values = [getattr(self, f) for f in self.FIELDS]
-
+        values = [v.value if isinstance(v, Enum) else v for v in values]
+        
         # 2. Pack payload
         values_bytes = struct.pack(self.FORMAT, *values)
         length = len(values_bytes)
@@ -91,8 +93,16 @@ class Msg:
         total_size = 1 + 2 + length + 2  # prefix + header+length + payload + CRC
         if len(data) < total_size:
             return None, MsgStatus.INCOMPLETE
-
+        
         payload_bytes = data[1:3 + length]  # header + payload
+        
+        # Skip msg types that do not fit
+        if (length == 0 and cls.TYPE != MsgType.EMPTY) or \
+            (length > 0 and cls.TYPE.value != payload_bytes[2]):
+            return None, MsgStatus.WRONG_TYPE
+        
+        # TODO: Skip message types by payload length.
+
         crc_bytes = data[3 + length:3 + length + 2]
 
         if prefix != cls.PREFIX_VALUE:
@@ -114,7 +124,13 @@ class Msg:
             values = struct.unpack(cls.FORMAT, values_bytes)
 
             for field, value in zip(cls.FIELDS, values):
-                setattr(obj, field, value)
+                # Use current attribute to detect enum type
+                current_attr = getattr(obj, field)
+                if isinstance(current_attr, Enum):
+                    enum_type = type(current_attr)
+                    setattr(obj, field, enum_type(value))
+                else:
+                    setattr(obj, field, value)
 
         obj.seq = header & 0x0F
         obj.sender = header & 0xF0

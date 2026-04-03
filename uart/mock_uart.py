@@ -2,17 +2,15 @@ from uart.uart_interface import UARTInterface
 
 class MockUART(UARTInterface):
     def __init__(self):
-        self.in_buffer = bytearray()
-        self.out_buffer = bytearray()
+        self.buffer = bytearray()
 
     def read(self, size: int = 1) -> bytes:
-        data = self.in_buffer[:size]
-        self.in_buffer = self.in_buffer[size:]
+        data = self.buffer[:size]
+        self.buffer = self.buffer[size:]
         return bytes(data)
 
     def write(self, data: bytes) -> int:
-        # self.out_buffer.extend(data)
-        self.in_buffer.extend(data) # echo input
+        self.buffer.extend(data) # echo input
         return len(data)
     
     def close(self):
@@ -20,4 +18,4 @@ class MockUART(UARTInterface):
     
     @property
     def in_waiting(self) -> int:
-        return len(self.out_buffer)
+        return len(self.buffer)

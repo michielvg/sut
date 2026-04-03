@@ -3,8 +3,9 @@ name: Run Tests
 on:
   push:
     branches: [ "dev", "main" ]
+    paths-ignore:
+      - "docs/coverage.svg"
   workflow_dispatch:
-
   pull_request:
 
 jobs:
@@ -12,20 +13,73 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"   # adjust as needed
+          python-version: "3.11"
 
+      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest
-          # If you have a requirements file:
+          pip install pytest pytest-cov
           pip install -r requirements.txt
 
-      - name: Run pytest
-        run: PYTHONPATH=. pytest tests/
+      # Run tests with coverage
+      - name: Run tests with coverage
+        id: run_tests
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest --cov=your_package_name --cov-report=xml --cov-report=html tests/
+
+      # Generate coverage badge (shields-style)
+      - name: Generate coverage badge
+        run: |
+          PERCENT=$(python -c "import xml.etree.ElementTree as ET; tree=ET.parse('coverage.xml'); root=tree.getroot(); cov=root.attrib['line-rate']; print(int(float(cov)*100))")
+
+          if [ "$PERCENT" -ge 90 ]; then
+            COLOR="#4c1"   # green
+          elif [ "$PERCENT" -ge 70 ]; then
+            COLOR="#dfb317"  # yellow
+          else
+            COLOR="#e05d44"  # red
+          fi
+
+          cat <<EOF > coverage.svg
+          <svg xmlns="http://www.w3.org/2000/svg" width="150" height="20">
+            <linearGradient id="s" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <mask id="m">
+              <rect width="150" height="20" rx="3" fill="#fff"/>
+            </mask>
+            <g mask="url(#m)">
+              <rect width="90" height="20" fill="#555"/>
+              <rect x="90" width="60" height="20" fill="${COLOR}"/>
+              <rect width="150" height="20" fill="url(#s)"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
+              <text x="45" y="14">coverage</text>
+              <text x="120" y="14">${PERCENT}%</text>
+            </g>
+          </svg>
+          EOF
+
+          mkdir -p docs
+          mv coverage.svg docs/coverage.svg
+
+      # Commit coverage badge
+      - name: Commit coverage badge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/coverage.svg
+          git commit -m "Update coverage badge" || echo "No changes to commit"
+          git push

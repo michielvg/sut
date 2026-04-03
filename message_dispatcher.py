@@ -1,6 +1,7 @@
 from collections import defaultdict, deque
 from itertools import chain
 from typing import Callable, Deque, Dict, List
+from messages.empty import EmptyMsg
 from messages.message import Msg, MsgStatus, MsgType
 from uart.uart_interface import UARTInterface
 from enum import Flag, auto
@@ -33,10 +34,12 @@ class MessageDispatcher:
     # ----------------------------
     def _register_message_types(self) -> None:
         """Associate a type byte with a Msg subclass."""
-        message_types = MessageDispatcher._leaf_subclasses(Msg)
-        for message_type in message_types:
-            self.message_map[message_type].append(message_type)
-    
+        # message_types = MessageDispatcher._leaf_subclasses(Msg)
+        # for message_type in message_types:
+        #     self.message_map[message_type].append(message_type)
+        
+        self.message_map[MsgType.EMPTY].append(EmptyMsg)
+
     # ----------------------------
     def __init__(self, uart: UARTInterface) -> None:
         """
@@ -74,6 +77,14 @@ class MessageDispatcher:
                     (RX, TX, or BOTH)
         """
         self.subscribers[type].append((callback, direction))
+    
+    # ----------------------------
+    def register_type(self, msg_type: MsgType, msg_cls: type):
+        # Ensure the key exists first
+        self.message_map.setdefault(msg_type, [])
+    
+        if msg_cls not in self.message_map[msg_type]:
+            self.message_map[msg_type].append(msg_cls)
 
     # ----------------------------
     def send_message(self, msg_obj: Msg) -> None:
@@ -81,7 +92,8 @@ class MessageDispatcher:
         Append a message object to the TX queue. The dispatcher will call
         pack() when sending and broadcast TX events after writing.
         """
-        self.tx_queue.append(msg_obj)
+        if msg_obj is not None:
+            self.tx_queue.append(msg_obj)
     
     # ----------------------------
     def poll(self) -> None:
@@ -142,14 +154,33 @@ class MessageDispatcher:
     def _flush_send_queue(self) -> None:
         """
         Send queued messages to UART.
+        Catch exceptions so one bad message doesn't stop the queue.
+        Distinguish between pack errors and UART write errors.
         """
-        # TODO: Keep track of and set .seq for each message send.
         while self.tx_queue:
             msg_obj = self.tx_queue.popleft()
-            msg_bytes = msg_obj.pack()
-            self.uart.write(msg_bytes)
-            msg_obj.sent_at = datetime.now()
-            self._broadcast(msg_obj, MessageDirection.TX)
+
+            # Step 1: pack the message
+            try:
+                msg_bytes = msg_obj.pack()
+            except Exception as e:
+                print(f"Error packing message {msg_obj}: {e}")
+                continue  # skip to next message
+
+            # Step 2: write to UART
+            try:
+                self.uart.write(msg_bytes)
+                msg_obj.sent_at = datetime.now()
+            except Exception as e:
+                print(f"Error writing message {msg_obj} to UART: {e}")
+                continue  # skip to next message
+
+            # Step 3: broadcast TX
+            try:
+                self._broadcast(msg_obj, MessageDirection.TX)
+            except Exception as e:
+                print(f"Error broadcasting message {msg_obj}: {e}")
+                # continue, broadcasting should not stop other messages
 
     # ----------------------------
     def _read_and_dispatch(self) -> None:
@@ -177,7 +208,13 @@ class MessageDispatcher:
             error: bool = False
             # Try all registered Msg classes to unpack
             for msg_cls in chain.from_iterable(self.message_map.values()):
-                msg_obj, status = msg_cls.unpack(self.rx_buffer)
+                try:
+                    msg_obj, status = msg_cls.unpack(self.rx_buffer)
+                except Exception as e:
+                    # Log the error, skip this message class
+                    print(f"[WARN] Failed to unpack {msg_cls.__name__}: {e}")
+                    continue
+
                 if status == MsgStatus.OK:
                     msg_obj.received_at = datetime.now()
                     # Remove processed bytes from buffer

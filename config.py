@@ -9,17 +9,26 @@ class Config:
 
     def load(self, config_file: str):
         path = Path(config_file)
+
         if not path.is_file():
             print(f"Warning: config file '{config_file}' not found. Using defaults.")
-            self.data = {}  # keep empty dict, defaults will be used
+            self.data = {}
             return
 
         try:
             with open(config_file) as f:
-                self.data = json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"Error: failed to parse config file '{config_file}': {e}")
-            self.data = {}  # fallback to empty dict
+                data = json.load(f)
+
+            if not isinstance(data, dict):
+                print(f"Error: config file '{config_file}' must contain a JSON object.")
+                self.data = {}
+                return
+
+            self.data = data
+
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Error: failed to load config file '{config_file}': {e}")
+            self.data = {}
 
     def get_section(self, section: str) -> dict | bool | None:
         """
