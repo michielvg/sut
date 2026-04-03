@@ -35,7 +35,7 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          pytest --cov=your_package_name --cov-report=xml --cov-report=html tests/
+          pytest --cov=sut --cov-report=xml --cov-report=html tests/
 
       # Generate coverage badge (shields-style)
       - name: Generate coverage badge
