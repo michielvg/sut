@@ -140,3 +140,50 @@ def test_logger_date_rollover_creates_new_file(tmp_path):
         records2 = read_ndjson(path2)
         assert records1[0]["tx"] == "TX1"
         assert records2[0]["tx"] == "TX2"
+
+def test_print_dev_menu_sets_device(monkeypatch):
+    fake_devices = ["DEV_A", "DEV_B", "DEV_C"]
+
+    # Mock Device enum values
+    class FakeDevice:
+        def __iter__(self):
+            return iter([type("D", (), {"value": d}) for d in fake_devices])
+
+    # Patch Device inside your module
+    monkeypatch.setattr("sut.logger.Device", FakeDevice())
+
+    # Mock user input → choose 2nd device
+    monkeypatch.setattr("builtins.input", lambda _: "2")
+
+    logger = NDJSONLogger(src="SRC", intent="TEST", dev=None)
+
+    assert logger.dev == "DEV_B"
+
+
+from unittest.mock import patch, mock_open
+
+def test_logger_fsync_and_flush_called(tmp_path):
+    logger = NDJSONLogger(
+        src="SRC",
+        dev="DEV",
+        intent="TEST",
+        buffer_size=1,
+        fsync=True,
+        base_path=str(tmp_path),
+    )
+
+    m = mock_open()
+
+    with patch("builtins.open", m), \
+         patch("sut.logger.os.fsync") as mock_fsync:
+
+        logger.log("TX", "RX")
+
+        handle = m()
+
+        # file.flush() called
+        assert handle.flush.called
+
+        # os.fsync() called with fileno
+        assert mock_fsync.called
+        mock_fsync.assert_called_with(handle.fileno())

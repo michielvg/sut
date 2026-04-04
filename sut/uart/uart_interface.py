@@ -12,7 +12,6 @@ class UARTInterface(ABC):
         Read up to `size` bytes from the UART.
         Must be implemented by subclasses.
         """
-        pass
 
     @abstractmethod
     def write(self, data: bytes) -> int:
@@ -21,11 +20,10 @@ class UARTInterface(ABC):
         Returns the number of bytes written.
         Must be implemented by subclasses.
         """
-        pass
 
     @abstractmethod
     def close(self):
-        pass
+        """Closes"""
 
     @property
     @abstractmethod
@@ -34,4 +32,3 @@ class UARTInterface(ABC):
         Return the number of bytes currently available to read.
         Must be implemented by subclasses.
         """
-        pass

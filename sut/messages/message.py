@@ -15,13 +15,16 @@ class MsgStatus(Enum):
 class MsgType(Enum):
     PROXY = -2
     EMPTY = -1
-    TELEMETRY = 0x10
+    MSG_10 = 0x10
+    TELEMETRY = MSG_10
     MSG_11 = 0x11 # From DU -> START
     MSG_12 = 0x12 # From DU -> START
     MSG_21 = 0x21 # From DU -> END/TIMEOUT
+    SHUTDOWN = MSG_21
     MSG_30 = 0X30
     MSG_31 = 0X31
-    TIMESTAMP = 0X32
+    MSG_32 = 0X32
+    TIMESTAMP = MSG_32
 
     
 class Msg:

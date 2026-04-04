@@ -82,3 +82,15 @@ def test_close_calls_serial_close(pyserial_uart):
     uart, mock_ser = pyserial_uart
     uart.close()
     mock_ser.close.assert_called_once()
+
+def test_close_exception_handled(pyserial_uart):
+    uart, mock_ser = pyserial_uart
+
+    # Make close() raise an exception
+    mock_ser.close.side_effect = Exception("test error")
+
+    # Should not raise, just swallow
+    uart.close()
+
+    # Ensure close was called
+    mock_ser.close.assert_called_once()

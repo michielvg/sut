@@ -12,4 +12,4 @@ class Device(ABC):
      
     @abstractmethod
     def setup(self):
-        pass
+        """Initialize the device."""

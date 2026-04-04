@@ -9,7 +9,8 @@ class BT_E6000_Msg_31(Msg):
               'b20']
     TYPE = MsgType.MSG_31
     
-    #  h00 h9F h01 hA9 h01 h01 h00 h05 h00 h28 h00 h88 h00 h43 h01 h78 h00 
+    # 25 9F 01 A9 01 01 00 05 00 28 00 6E 00 10 01 78 00
+    # 00 9F 01 A9 01 01 00 05 00 28 00 88 00 43 01 78 00 
     def __init__(self, 
                  b4 = 0x00, 
                  b5 = 0x9F, 

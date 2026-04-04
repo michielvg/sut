@@ -43,7 +43,7 @@ class PySerialUART(UARTInterface):
         try:
             self.ser.close()
         except Exception:
-            pass
+            """Program needs to be able to close"""
     
     @property
     def in_waiting(self) -> int:

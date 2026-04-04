@@ -131,3 +131,19 @@ def test_str_representation():
 
     # Should be hex string
     assert all(len(byte) == 2 for byte in s.split())
+
+# ------------------------
+# CRC calculation
+# ------------------------
+def test_crc_calculation():
+    msg = Msg()
+
+    data = msg.pack()
+    data = bytearray(data)
+    data[-2] = 0
+    data[-1] = 0
+    data = bytes(data)
+
+    msg1, status = Msg.unpack(data)
+
+    assert msg.data == msg1.data

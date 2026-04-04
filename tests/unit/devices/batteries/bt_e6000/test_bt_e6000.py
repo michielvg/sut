@@ -4,6 +4,10 @@ from unittest.mock import MagicMock
 
 from sut.devices.batteries import BT_E6000
 from sut.devices.batteries.bt_e6000.messages import *
+from sut.devices.batteries.bt_e6000.messages.msg_11 import BT_E6000_Msg_11
+from sut.devices.batteries.bt_e6000.messages.msg_12 import BT_E6000_Msg_12
+from sut.devices.batteries.bt_e6000.messages.shutdown import BT_E6000_ShutdownMsg
+from sut.devices.batteries.bt_e6000.messages.timestamp import BT_E6000_TimeStampMsg
 from sut.messages import Msg, MsgType
 from sut.message_dispatcher import MessageDispatcher, MessageDirection
 
@@ -38,6 +42,25 @@ def test_empty_request_handler(bt_e6000, mock_dispatcher):
     msg.reply_for_msg.assert_called_once_with(msg)
     mock_dispatcher.send_message.assert_called_once_with(reply_msg)
 
+def test_11_msg_request_handler(bt_e6000, mock_dispatcher):
+    msg = MagicMock(spec=Msg)
+    reply_msg = MagicMock(spec=BT_E6000_Msg_11)
+    BT_E6000_Msg_11.reply_for_msg = MagicMock(return_value=reply_msg)
+
+    bt_e6000.msg_11_request_handler(msg, mock_dispatcher, MessageDirection.RX)
+
+    BT_E6000_Msg_11.reply_for_msg.assert_called_once_with(msg)
+    mock_dispatcher.send_message.assert_called_once_with(reply_msg)
+
+def test_12_msg_request_handler(bt_e6000, mock_dispatcher):
+    msg = MagicMock(spec=Msg)
+    reply_msg = MagicMock(spec=BT_E6000_Msg_12)
+    BT_E6000_Msg_12.reply_for_msg = MagicMock(return_value=reply_msg)
+
+    bt_e6000.msg_12_request_handler(msg, mock_dispatcher, MessageDirection.RX)
+
+    BT_E6000_Msg_12.reply_for_msg.assert_called_once_with(msg)
+    mock_dispatcher.send_message.assert_called_once_with(reply_msg)
 
 def test_telemetry_request_handler(bt_e6000, mock_dispatcher):
     msg = MagicMock(spec=Msg)
@@ -49,6 +72,15 @@ def test_telemetry_request_handler(bt_e6000, mock_dispatcher):
     BT_E6000_TelemetryMsg.reply_for_msg.assert_called_once_with(msg)
     mock_dispatcher.send_message.assert_called_once_with(reply_msg)
 
+def test_shutdown_request_handler(bt_e6000, mock_dispatcher):
+    msg = MagicMock(spec=Msg)
+    reply_msg = MagicMock(spec=BT_E6000_ShutdownMsg)
+    BT_E6000_ShutdownMsg.reply_for_msg = MagicMock(return_value=reply_msg)
+
+    bt_e6000.shutdown_request_handler(msg, mock_dispatcher, MessageDirection.RX)
+
+    BT_E6000_ShutdownMsg.reply_for_msg.assert_called_once_with(msg)
+    mock_dispatcher.send_message.assert_called_once_with(reply_msg)
 
 def test_msg_30_request_handler(bt_e6000, mock_dispatcher):
     msg = MagicMock(spec=Msg)
@@ -71,6 +103,15 @@ def test_msg_31_request_handler(bt_e6000, mock_dispatcher):
     BT_E6000_Msg_31.reply_for_msg.assert_called_once_with(msg)
     mock_dispatcher.send_message.assert_called_once_with(reply_msg)
 
+def test_timestamp_request_handler(bt_e6000, mock_dispatcher):
+    msg = MagicMock(spec=Msg)
+    reply_msg = MagicMock(spec=BT_E6000_TimeStampMsg)
+    BT_E6000_TimeStampMsg.reply_for_msg = MagicMock(return_value=reply_msg)
+
+    bt_e6000.timestamp_request_handler(msg, mock_dispatcher, MessageDirection.RX)
+
+    BT_E6000_TimeStampMsg.reply_for_msg.assert_called_once_with(msg)
+    mock_dispatcher.send_message.assert_called_once_with(reply_msg)
 
 # ------------------------
 # Test request handlers with no reply
