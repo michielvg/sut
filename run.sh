@@ -67,4 +67,5 @@ fi
 # run script
 echo "Start tool"
 echo "================"
-python sut.py "$@"
+export PYTHONPATH=.
+python sut/main.py "$@"

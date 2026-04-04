@@ -17,8 +17,9 @@ import crcmod.predefined
 
 from sut.config import Config
 from sut.logger import NDJSONLogger
-from sut.messages.message import Msg, MsgStatus
+from sut.messages.message import Msg, MsgStatus, MsgType
 from sut.message_dispatcher import MessageDirection, MessageDispatcher
+from sut.messages.proxy import ProxyMsg
 from sut.uart.mock_uart import MockUART
 from sut.uart.pipe_uart import PipeUART
 from sut.uart.pyserial_uart import PySerialUART
@@ -189,9 +190,9 @@ def main():
         sys.exit(1)
 
     dispatcher = MessageDispatcher(serial_uart)
-    dispatcher.register_message_type(None, Msg)  # for empty messages
-    dispatcher.subscribe(None, print_handler, direction=MessageDirection.BOTH)
-    dispatcher.subscribe(None, log_handler, direction=MessageDirection.BOTH)
+    dispatcher.register_type(MsgType.PROXY, ProxyMsg)
+    dispatcher.subscribe('*', print_handler, direction=MessageDirection.BOTH)
+    dispatcher.subscribe('*', log_handler, direction=MessageDirection.BOTH)
     # dispatcher.subscribe(None, ping_handler, direction=MessageDirection.RX) # TODO: avoid infinite loop
 
     # Open pipe
@@ -202,7 +203,7 @@ def main():
         sys.exit(1)
 
     pipe_dispatcher = MessageDispatcher(pipe_uart)
-    pipe_dispatcher.register_message_type(None, Msg)
+    pipe_dispatcher.register_type(MsgType.PROXY, ProxyMsg)
     pipe_dispatcher.subscribe('*', make_pipe_forwarder(dispatcher), direction=MessageDirection.RX)
 
     # Main loop

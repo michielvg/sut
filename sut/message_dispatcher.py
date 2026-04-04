@@ -79,6 +79,7 @@ class MessageDispatcher:
         self.subscribers[type].append((callback, direction))
     
     # ----------------------------
+    # TODO: msg_type is not used right now, byt cls.TYPE is. Decide how to go forward, probably remove the need for msg_type. and flatten the message_map.
     def register_type(self, msg_type: MsgType, msg_cls: type):
         # Ensure the key exists first
         self.message_map.setdefault(msg_type, [])

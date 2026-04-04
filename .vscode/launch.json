@@ -2,16 +2,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Debug Tests",
+            "name": "Python: Debug Main",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/tests/test_message_dispatcher.py",
+            "program": "${workspaceFolder}/sut/main.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [],
-            "cwd": "${workspaceFolder}", // <--- important
+            "cwd": "${workspaceFolder}",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}" // <--- ensures top-level modules are found
+                "PYTHONPATH": "${workspaceFolder}"
             }
         }
     ]

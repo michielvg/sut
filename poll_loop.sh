@@ -48,7 +48,7 @@ send_payload() {
 }
 
 # Send init message.
-send_payload 0 0x42 0
+send_payload 0 0x42 0 0 0
 
 for ((i=1; i<=count; i++)); do
     # Send status/Poll status

@@ -13,6 +13,7 @@ class MsgStatus(Enum):
     WRONG_TYPE = 4
 
 class MsgType(Enum):
+    PROXY = -2
     EMPTY = -1
     TELEMETRY = 0x10
     MSG_11 = 0x11 # From DU -> START
@@ -58,26 +59,27 @@ class Msg:
         return result
 
     def pack(self):
-        # 1. Collect payload values
-        values = [getattr(self, f) for f in self.FIELDS]
-        values = [v.value if isinstance(v, Enum) else v for v in values]
-        
-        # 2. Pack payload
-        values_bytes = struct.pack(self.FORMAT, *values)
-        length = len(values_bytes)
-        if (self.type != MsgType.EMPTY):
-            length += 1
-        prefix_bytes = struct.pack("BB", (self.sender | self.seq) & 0xFF, length)
-        if (self.type != MsgType.EMPTY):
-            prefix_bytes += bytes([self.type.value])
-        payload_bytes = prefix_bytes + values_bytes
+        if self.type != MsgType.PROXY:
+            # 1. Collect payload values
+            values = [getattr(self, f) for f in self.FIELDS]
+            values = [v.value if isinstance(v, Enum) else v for v in values]
+            
+            # 2. Pack payload
+            values_bytes = struct.pack(self.FORMAT, *values)
+            length = len(values_bytes)
+            if (self.type != MsgType.EMPTY):
+                length += 1
+            prefix_bytes = struct.pack("BB", (self.sender | self.seq) & 0xFF, length)
+            if (self.type != MsgType.EMPTY):
+                prefix_bytes += bytes([self.type.value])
+            payload_bytes = prefix_bytes + values_bytes
 
-        # 3. Calculate CRC over payload (or include prefix if your protocol does)
-        crc_value = Msg.crc_func(payload_bytes)
-        crc_bytes = struct.pack('<H', crc_value)  # little-endian CRC
+            # 3. Calculate CRC over payload (or include prefix if your protocol does)
+            crc_value = Msg.crc_func(payload_bytes)
+            crc_bytes = struct.pack('<H', crc_value)  # little-endian CRC
 
-        # 4. Prepend prefix and append CRC
-        self.data = bytes([self.PREFIX_VALUE]) + payload_bytes + crc_bytes
+            # 4. Prepend prefix and append CRC
+            self.data = bytes([self.PREFIX_VALUE]) + payload_bytes + crc_bytes
 
         return self.data
 
@@ -97,8 +99,10 @@ class Msg:
         payload_bytes = data[1:3 + length]  # header + payload
         
         # Skip msg types that do not fit
-        if (length == 0 and cls.TYPE != MsgType.EMPTY) or \
-            (length > 0 and cls.TYPE.value != payload_bytes[2]):
+        # TODO: simplify this logic
+        if  cls.TYPE != MsgType.PROXY and (
+            (length == 0 and cls.TYPE != MsgType.EMPTY) or \
+            (length > 0 and cls.TYPE.value != payload_bytes[2])):
             return None, MsgStatus.WRONG_TYPE
         
         # TODO: Skip message types by payload length.
@@ -117,7 +121,7 @@ class Msg:
 
         obj = cls()
 
-        if length > 0:
+        if length > 0 and cls.TYPE != MsgType.PROXY:
             obj.type = MsgType(payload_bytes[2])
 
             values_bytes = payload_bytes[3:]  # skip header
@@ -135,7 +139,7 @@ class Msg:
         obj.seq = header & 0x0F
         obj.sender = header & 0xF0
 
-        obj.data = data[:total_size]  # full message including CRC
+        obj.data = bytes([obj.PREFIX_VALUE]) + payload_bytes + struct.pack('<H', received_crc) # TODO: This was quickly done to make the PROXY type work. Clean this up.
         obj.crc = received_crc
         obj.status = MsgStatus.OK
 
