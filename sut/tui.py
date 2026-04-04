@@ -16,13 +16,19 @@ class Style(Enum):
 class TUI:
     def __init__(self, prompt: str = "SUT> "):
         self.prompt = prompt
-
+        self.enable()
+    
+    def enable(self):
         if hasattr(builtins, "tui") and builtins.tui is not self:
             warnings.warn("Overwriting builtin 'tui'")
             builtins.tui = self
 
         if getattr(builtins, "print") is not self.print:
+            self._print_ = builtins.print
             builtins.print = self.print
+
+    def disable(self):
+        builtins.print = self._print_
 
     def _print_prompt(self):
         sys.stdout.write(self.prompt)

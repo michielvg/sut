@@ -13,7 +13,7 @@ done
 if $dry_run; then
     exec 3> /dev/null
 else
-    exec 3> /tmp/sut_pipe
+    exec 3> /tmp/sut_pipe_in
 fi
 
 # Function to send arbitrary-length byte arrays

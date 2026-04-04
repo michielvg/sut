@@ -26,7 +26,7 @@ if $dry_run; then
     echo "DRY RUN"
     exec 3> /dev/null
 else
-    exec 3> /tmp/sut_pipe
+    exec 3> /tmp/sut_pipe_in
 fi
 
 echo "COUNT: ${count}"
