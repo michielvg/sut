@@ -14,7 +14,7 @@ WITH SplitCTE AS (
         STRING_SPLIT(tx, ' ') AS tx_parts,
         STRING_SPLIT(rx, ' ') AS rx_parts
     FROM read_ndjson_auto('./data/**/*.ndjson')
-    WHERE rx LIKE '00 80 16 10 %'
+    --WHERE rx LIKE '00 80 16 10 %'
 )
 SELECT * FROM SplitCTE;
 
@@ -38,12 +38,13 @@ SELECT * FROM rx_split where rx_parts[5] = '35';
 /*
 SELECT DISTINCT intent, rx_parts[7], rx_parts[8], rx_parts[9] FROM rx_split ORDER BY rx_split.t;
 */
-
+/*
 SELECT tx_parts, rx_parts FROM rx_split ORDER BY t DESC LIMIT 10;
 
 SELECT DISTINCT rx_parts[19] FROM rx_split;
 SELECT DISTINCT rx_parts[20] FROM rx_split;
 SELECT DISTINCT rx_parts[21],rx_parts[22],rx_parts[23],rx_parts[24],rx_parts[25] FROM rx_split;
+*/
 
 SELECT
     intent,
@@ -75,3 +76,6 @@ SELECT
     rx_parts[25] AS '?',
     rx_parts
 FROM rx_split WHERE intent = 'Voltage 003'; --'10v on CN001'
+
+
+SELECT DISTINCT * FROM rx_split WHERE tx_parts[4] = '21';
