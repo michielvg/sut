@@ -96,12 +96,6 @@ class AppState:
                 self.logger.log(tx=f"{tx_msg}", rx="", notes="TIMEOUT")
             print(f"-- TIMEOUT {tx_msg}", Style.RED)
 
-    def ping_handler(self, msg: Msg, disp: MessageDispatcher, direction: MessageDirection):
-        """Reply to empty messages with a 'pong'."""
-        if direction & MessageDirection.RX:
-            reply = Msg.reply_for_msg(msg)
-            disp.send_message(reply)
-
     def make_pipe_forwarder(self, target_dispatcher: MessageDispatcher):
         """Return a handler that forwards RX messages to another dispatcher."""
         def handler(msg: Msg, disp: MessageDispatcher, direction: MessageDirection):
@@ -166,7 +160,6 @@ def main():
     dispatcher.register_type(MsgType.PROXY, ProxyMsg)
     dispatcher.subscribe('*', state.print_handler, direction=MessageDirection.BOTH)
     dispatcher.subscribe('*', state.log_handler, direction=MessageDirection.BOTH)
-    # dispatcher.subscribe(None, state.ping_handler, direction=MessageDirection.RX)
 
     # Open pipe
     try:
