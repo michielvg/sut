@@ -19,6 +19,8 @@ from sut.logger import NDJSONLogger
 from sut.messages.message import Msg, MsgStatus, MsgType
 from sut.message_dispatcher import MessageDirection, MessageDispatcher
 from sut.messages.proxy import ProxyMsg
+from sut.test_suites.battery import BatteryTestSuite
+from sut.test_suites.test_suite import TestSuite
 from sut.uart.mock_uart import MockUART
 from sut.uart.pipe_uart import PipeUART
 from sut.uart.pyserial_uart import PySerialUART
@@ -39,8 +41,10 @@ tui = TUI()
 # ---------- APP STATE ----------
 class AppState:
     """Encapsulates global state like logger and TX queue."""
-    def __init__(self, logger: NDJSONLogger | None):
+    def __init__(self, logger: NDJSONLogger | None, test_suite: TestSuite | None = None):
         self.logger = logger
+        self.test_suite = test_suite
+        self.test_iter = None
         self.tx_queue: dict[int, Msg] = {}
 
     # --------- HANDLERS ---------
@@ -132,6 +136,9 @@ def handle_user_command(line: str, dispatcher: MessageDispatcher, state: AppStat
         ping.sender=0x40
         ping.seq=0x01
         dispatcher.send_message(ping)
+    elif cmd == "run":
+        print("-- RUN: Input will be disabled while the test runs. Ctrl+C will still work")
+        state.test_iter = state.test_suite.run()
     elif cmd == "status":
         print(f"-- TX queue size: {len(state.tx_queue)}")
     elif cmd.startswith("send"):
@@ -150,7 +157,7 @@ def main():
     # Open serial device
     try:
         serial_uart = PySerialUART.from_config(config.get_section("uart"))
-        # serial_uart = MockUART()
+        #serial_uart = MockUART()
     except Exception:
         print("Serial problem", Style.RED)
         sys.exit(1)
@@ -172,6 +179,8 @@ def main():
     pipe_dispatcher.register_type(MsgType.PROXY, ProxyMsg)
     pipe_dispatcher.subscribe('*', state.make_pipe_forwarder(dispatcher), direction=MessageDirection.RX)
 
+    state.test_suite = BatteryTestSuite(dispatcher, logger, tui)
+    
     # ---------- MAIN LOOP ----------
     try:
         while True:
@@ -186,10 +195,20 @@ def main():
             # Clean TX queue
             state.clean_tx_queue()
 
-            # Check for user input
-            user_line = tui.input_poll()
-            if user_line is not None:
-                handle_user_command(user_line, dispatcher, state)
+            if state.test_suite.running:
+                if state.test_suite.pause:
+                    if len(state.tx_queue) == 0:
+                        state.test_suite.pause = False
+                else:
+                    try:
+                        next(state.test_iter)
+                    except StopIteration:
+                        state.test_iter = None  # or handle completion
+            else:
+                # Check for user input
+                user_line = tui.input_poll()
+                if user_line is not None:
+                    handle_user_command(user_line, dispatcher, state)
 
             time.sleep(0.01)  # prevent 100% CPU spin
 

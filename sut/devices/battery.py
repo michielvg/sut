@@ -2,7 +2,9 @@
 from enum import Enum
 
 from sut.devices.device import Device
-from sut.message_dispatcher import MessageDispatcher
+from sut.message_dispatcher import MessageDirection, MessageDispatcher
+from sut.messages.empty import EmptyMsg
+from sut.messages.message import Msg, MsgType
 
 
 class BatteryModel(Enum):
@@ -44,3 +46,42 @@ class BatteryModel(Enum):
 class Battery(Device):
     def __init__(self, model: BatteryModel, dispatcher: MessageDispatcher):
         super().__init__(model, dispatcher)
+
+
+    def setup(self):
+        for msg_type in self._msg_map:
+            self.dispatcher.subscribe(
+                msg_type,
+                self._generic_request_handler,
+                MessageDirection.RX
+            )
+
+        self.register_message_types()
+
+    def register_message_types(self):
+        for msg_type, msg_cls in self._msg_map.items():
+            self.dispatcher.register_type(msg_type, msg_cls)
+
+    def _generic_request_handler(self, msg: Msg, disp: MessageDispatcher, direction: MessageDirection):
+        msg_cls = self._msg_map.get(msg.type)
+        if msg_cls is None:
+            return
+
+        # Avoid replying to own messages
+        if msg_cls != EmptyMsg and isinstance(msg, msg_cls):
+            return
+
+        # Allow subclass override
+        reply = self.build_reply(msg, msg_cls)
+
+        if reply is not None:
+            disp.send_message(reply)
+
+    def build_reply(self, msg: Msg, msg_cls):
+        """Default reply behavior (can be overridden)"""
+        if msg.type == MsgType.EMPTY:
+            if msg.sender == 0x40:
+                return msg_cls.reply_for_msg(msg)
+            return None
+
+        return msg_cls.reply_for_msg(msg)

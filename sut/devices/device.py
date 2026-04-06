@@ -8,7 +8,6 @@ class Device(ABC):
         self.model = model
         self.dispatcher = dispatcher
         self.setup()
-        pass
      
     @abstractmethod
     def setup(self):
