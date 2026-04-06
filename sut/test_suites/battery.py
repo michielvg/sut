@@ -32,8 +32,36 @@ class BatteryTestSuite(TestSuite):
         self.running = True
         
         return self._command_sniffer_000()
-
+    
     def _command_sniffer_000(self):
+        self.tui.print(
+            "This test will try to sniff out the device known commands, one every second."
+        )
+        if not self.tui.input_bool("Continue?"):
+            yield from self._end()
+            return
+
+        self.logger.intent = "Command sniffing (0xB9)"
+
+        next_time = time.time()
+        from sut.messages.proxy import ProxyMsg
+
+        for i in range(0x00, 0x100):
+            next_time += BatteryTestSuite.WAIT_TIME
+            # Wait until it's time
+            while time.time() < next_time:
+                yield
+
+            msg, _ = ProxyMsg.unpack(bytes([0x00, 0xB9, 0x01, i, 0x00, 0x00]))
+
+            self.dispatcher.send_message(msg)
+
+            self.pause = True
+            yield 
+
+        yield from self._command_sniffer_001()
+
+    def _command_sniffer_001(self):
         self.tui.print(
             "This test will try to sniff out the device known commands, one every second."
         )
