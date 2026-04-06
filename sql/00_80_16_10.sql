@@ -76,6 +76,3 @@ SELECT
     rx_parts[25] AS '?',
     rx_parts
 FROM rx_split WHERE intent = 'Voltage 003'; --'10v on CN001'
-
-
-SELECT DISTINCT * FROM rx_split WHERE tx_parts[4] = '21';

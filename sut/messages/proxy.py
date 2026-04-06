@@ -6,7 +6,8 @@ class ProxyMsg(Msg):
     TYPE = MsgType.PROXY
 
     # 
-    def __init__(self):
+    def __init__(self, data: bytes = bytes()):
         super().__init__(ProxyMsg.TYPE)
+        self.data = data
 
 

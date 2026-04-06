@@ -9,6 +9,8 @@ from sut.tui import TUI, Style
 
 class BatteryTestSuite(TestSuite):
 
+    WAIT_TIME = 1
+
     # def msg_handler(self, msg: Msg, disp: MessageDispatcher, direction: MessageDirection):
     #     pass
 
@@ -29,13 +31,42 @@ class BatteryTestSuite(TestSuite):
         
         self.running = True
         
-        return self._msg_30_000()
+        return self._command_sniffer_000()
+
+    def _command_sniffer_000(self):
+        self.tui.print(
+            "This test will try to sniff out the device known commands, one every second."
+        )
+        if not self.tui.input_bool("Continue?"):
+            yield from self._end()
+            return
+
+        self.logger.intent = "Command sniffing"
+
+        next_time = time.time()
+        from sut.messages.proxy import ProxyMsg
+
+        for i in range(0x00, 0x100):
+            next_time += BatteryTestSuite.WAIT_TIME
+            # Wait until it's time
+            while time.time() < next_time:
+                yield
+
+            msg, _ = ProxyMsg.unpack(bytes([0x00, 0x40 | (i % 4), 0x05, i, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
+
+            self.dispatcher.send_message(msg)
+
+            self.pause = True
+            yield 
+
+        yield from self._ping_000()
        
     def _ping_000(self):
         self.tui.print(
             "This test will send a ping message every second,\nincrementing the header byte by one each time."
         )
         if not self.tui.input_bool("Continue?"):
+            yield from self._end()
             return
 
         self.logger.intent = "HEADER INC"
@@ -43,7 +74,7 @@ class BatteryTestSuite(TestSuite):
         next_time = time.time()
 
         for i in range(0x00, 0x100):
-            next_time += 1
+            next_time += BatteryTestSuite.WAIT_TIME
             # Wait until it's time
             while time.time() < next_time:
                 yield
@@ -64,6 +95,7 @@ class BatteryTestSuite(TestSuite):
             "This test will send a 0x30 message every second. 20 in total. (Playback)"
         )
         if not self.tui.input_bool("Continue?"):
+            yield from self._end()
             return
 
         self.logger.intent = "MSG_30 DIFF PLAYBACK"
@@ -72,7 +104,7 @@ class BatteryTestSuite(TestSuite):
 
         from sut.devices.chargers.messages.msg_30 import Msg_30
         for i in range(20):
-            next_time += 1
+            next_time += BatteryTestSuite.WAIT_TIME
             # Wait until it's time
             while time.time() < next_time:
                 yield
@@ -92,35 +124,38 @@ class BatteryTestSuite(TestSuite):
             "This test will send a couple of 0x30 messages, one every second. Probing the battery."
         )
         if not self.tui.input_bool("Continue?"):
+            yield from self._end()
             return
 
         self.logger.intent = "MSG_30 polling"
 
         next_time = time.time()
         from sut.devices.chargers.messages.msg_30 import Msg_30
-        messsages = [
+        messages = [
             Msg_30(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            Msg_30(b4 = 0),
-            Msg_30(b5 = 0),
-            Msg_30(b6 = 0),
-            Msg_30(b7 = 0),
-            Msg_30(b8 = 0),
-            Msg_30(b9 = 0),
-            Msg_30(b10 = 0),
-            Msg_30(b11 = 0),
-            Msg_30(b12 = 0),
-            Msg_30(b13 = 0),
-            Msg_30(b14 = 0),
-            Msg_30(b15 = 0),
-            Msg_30(b16 = 0),
-            Msg_30(b17 = 0),
-            Msg_30(b18 = 0),
-            Msg_30(b19 = 0),
             Msg_30(b6 = 0, b7 = 0, b8 = 0),
             Msg_30(b10 = 0, b11 = 0, b12 = 0, b13 = 0),
         ]
-        for i, msg in enumerate(messsages):
-            next_time += 1
+
+        messages.extend([Msg_30(b4=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b5=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b6=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b7=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b8=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b9=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b10=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b11=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b12=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b13=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b14=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b15=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b16=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b17=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b18=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_30(b19=i) for i in range(0x00, 0x100)])
+
+        for i, msg in enumerate(messages):
+            next_time += BatteryTestSuite.WAIT_TIME
             # Wait until it's time
             while time.time() < next_time:
                 yield
@@ -139,6 +174,7 @@ class BatteryTestSuite(TestSuite):
             "This test will send a 0x30 message every second. 20 in total. (Playback)"
         )
         if not self.tui.input_bool("Continue?"):
+            yield from self._end()
             return
 
         self.logger.intent = "MSG_30 DIFF PLAYBACK"
@@ -147,7 +183,7 @@ class BatteryTestSuite(TestSuite):
 
         from sut.devices.chargers.messages.msg_31 import Msg_31
         for i in range(20):
-            next_time += 1
+            next_time += BatteryTestSuite.WAIT_TIME
             # Wait until it's time
             while time.time() < next_time:
                 yield
@@ -167,27 +203,93 @@ class BatteryTestSuite(TestSuite):
             "This test will send a couple of 0x31 messages, one every second. Probing the battery."
         )
         if not self.tui.input_bool("Continue?"):
+            yield from self._end()
             return
 
         self.logger.intent = "MSG_31 polling"
 
         next_time = time.time()
         from sut.devices.chargers.messages.msg_31 import Msg_31
-        messsages = [
-            Msg_31(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            Msg_31(b4 = 0),
-            Msg_31(b5 = 0),
-            Msg_31(b6 = 0),
-            Msg_31(b7 = 0),
-            Msg_31(b8 = 0),
-            Msg_31(b9 = 0),
-            Msg_31(b10 = 0),
-            Msg_31(b11 = 0),
-            Msg_31(b12 = 0),
-            Msg_31(b13 = 0)
+        messages = [
+            Msg_31(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         ]
-        for i, msg in enumerate(messsages):
-            next_time += 1
+
+        messages.extend([Msg_31(b4=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b5=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b6=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b7=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b8=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b9=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b10=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b11=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b12=i) for i in range(0x00, 0x100)])
+        messages.extend([Msg_31(b13=i) for i in range(0x00, 0x100)])
+
+        for i, msg in enumerate(messages):
+            next_time += BatteryTestSuite.WAIT_TIME
+            # Wait until it's time
+            while time.time() < next_time:
+                yield
+
+            msg.seq = i % 4
+
+            self.dispatcher.send_message(msg)
+
+            self.pause = True
+            yield 
+
+        yield from self._telemetry_000()
+
+    def _telemetry_000(self):
+        self.tui.print(
+            "This test will send a telemetry message every second. 20 in total. (Playback)"
+        )
+        if not self.tui.input_bool("Continue?"):
+            yield from self._end()
+            return
+
+        self.logger.intent = "TELEMETRY DIFF PLAYBACK"
+
+        next_time = time.time()
+
+        from sut.devices.chargers.messages.telemetry import TelemetryMsg
+        for i in range(20):
+            next_time += BatteryTestSuite.WAIT_TIME
+            # Wait until it's time
+            while time.time() < next_time:
+                yield
+
+            msg = TelemetryMsg()
+            msg.seq = i % 4
+
+            self.dispatcher.send_message(msg)
+
+            self.pause = True
+            yield 
+
+        yield from self._telemetry_001()
+    
+    def _telemetry_001(self):
+        self.tui.print(
+            "This test will send a 4 * 255 of telemetry messages, one every second. Probing the battery."
+        )
+        if not self.tui.input_bool("Continue?"):
+            yield from self._end()
+            return
+
+        self.logger.intent = "TELEMETRY polling"
+
+        next_time = time.time()
+        from sut.devices.chargers.messages.telemetry import TelemetryMsg
+        messages = []
+
+        messages.extend([TelemetryMsg(b4=i) for i in range(0x01, 0x100)])
+        messages.extend([TelemetryMsg(b5=i) for i in range(0x01, 0x100)])
+        messages.extend([TelemetryMsg(b6=i) for i in range(0x01, 0x100)])
+        messages.extend([TelemetryMsg(b7=i) for i in range(0x01, 0x100)])
+
+        for i, msg in enumerate(messages):
+            next_time += BatteryTestSuite.WAIT_TIME
             # Wait until it's time
             while time.time() < next_time:
                 yield
